@@ -196,10 +196,20 @@ MoveCamera = function(x,y,Button,FirstDown)
 Window.OnMouseDown = function(x,y,Button)
 {
 	MoveCamera( x,y,Button,true );
-}.bind(this)
+}
 
 Window.OnMouseMove = function(x,y,Button)
 {
 	MoveCamera( x,y,Button,false );
-}.bind(this)
+}
+
+Window.OnMouseScroll = function(x,y,Button,Delta)
+{
+	let Fly = Delta[1] * 50;
+	//Fly *= Params.ScrollFlySpeed;
+
+	const Camera = MoonApp.Camera;
+	Camera.OnCameraPanLocal( 0, 0, 0, true );
+	Camera.OnCameraPanLocal( 0, 0, Fly, false );
+}
 
