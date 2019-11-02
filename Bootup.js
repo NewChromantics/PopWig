@@ -15,13 +15,14 @@ SetGlobal.call(this);
 
 const RenderHeightmapShader = RegisterShaderAssetFilename('HeightMap.frag.glsl','Quad.vert.glsl');
 
-const ColourFilename = 'lroc_color_poles_4k.jpg';
-//const ColourFilename = 'lroc_color_poles_16k.jpg';
+const Colour4kFilename = 'lroc_color_poles_4k.jpg';
+const Colour16kFilename = 'lroc_color_poles_16k.jpg';
 const HeightmapFilename = 'ldem_16_uint.jpg';
 Pop.AsyncCacheAssetAsString('HeightMap.frag.glsl');
 Pop.AsyncCacheAssetAsString('Quad.vert.glsl');
 Pop.AsyncCacheAssetAsImage(HeightmapFilename);
-Pop.AsyncCacheAssetAsImage(ColourFilename);
+Pop.AsyncCacheAssetAsImage(Colour4kFilename);
+Pop.AsyncCacheAssetAsImage(Colour16kFilename);
 
 
 
@@ -33,6 +34,7 @@ function OnParamsChanged()
 Params.SquareStep = true;
 Params.DrawColour = true;
 Params.DrawHeight = true;
+Params.BigImage = false;
 Params.TerrainHeightScalar = 2.66;
 Params.PositionToHeightmapScale = 0.009;
 Params.Fov = 52;
@@ -43,6 +45,7 @@ var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRec
 ParamsWindow.AddParam('SquareStep');
 ParamsWindow.AddParam('DrawColour');
 ParamsWindow.AddParam('DrawHeight');
+ParamsWindow.AddParam('BigImage');
 ParamsWindow.AddParam('TerrainHeightScalar',0,5);
 ParamsWindow.AddParam('PositionToHeightmapScale',0,1);
 ParamsWindow.AddParam('TerrainHeightScalar',0,5);
@@ -111,7 +114,10 @@ const MoonApp = new TMoonApp();
 //let MoonHeightmap = CreateRandomSphereImage(32,32);
 //op.AsyncCacheAssetAsString('Quad.vert.glsl');
 let MoonHeightmap = null;
-let MoonColour = null;
+let MoonColour4k = null;
+let MoonColour16k = null;
+
+
 
 function Render(RenderTarget)
 {
@@ -120,10 +126,25 @@ function Render(RenderTarget)
 		MoonHeightmap = new Pop.Image(HeightmapFilename);
 		MoonHeightmap.SetLinearFilter(true);
 	}
-	if ( !MoonColour )
+	
+	let MoonColour;
+	if ( Params.BigImage )
 	{
-		MoonColour = new Pop.Image(ColourFilename);
-		MoonColour.SetLinearFilter(true);
+		if ( !MoonColour16k )
+		{
+			MoonColour16k = new Pop.Image(Colour16kFilename);
+			MoonColour16k.SetLinearFilter(true);
+		}
+		MoonColour = MoonColour16k;
+	}
+	else
+	{
+		if ( !MoonColour4k )
+		{
+			MoonColour4k = new Pop.Image(Colour4kFilename);
+			MoonColour4k.SetLinearFilter(true);
+		}
+		MoonColour = MoonColour4k;
 	}
 
 	MoonApp.Camera.FovVertical = Params.Fov;
