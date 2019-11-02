@@ -67,7 +67,7 @@ float4 RayMarchHeightmap(vec3 ro,vec3 rd,out float resT,out float3 Intersection)
 {
 	const float mint = 0.501;
 	const float maxt = 40.0;
-	const int Steps = 400;
+	const int Steps = 600;
 	float lh = 0.0;
 	float ly = 0.0;
 	
