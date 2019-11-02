@@ -15,15 +15,20 @@ SetGlobal.call(this);
 
 const RenderHeightmapShader = RegisterShaderAssetFilename('HeightMap.frag.glsl','Quad.vert.glsl');
 
+//const ColourFilename = 'lroc_color_poles_4k.jpg';
+const ColourFilename = 'lroc_color_poles_16k.jpg';
+const HeightmapFilename = 'ldem_16_uint.jpg';
 Pop.AsyncCacheAssetAsString('HeightMap.frag.glsl');
 Pop.AsyncCacheAssetAsString('Quad.vert.glsl');
-Pop.AsyncCacheAssetAsImage('ldem_16_uint.jpg');
+Pop.AsyncCacheAssetAsImage(HeightmapFilename);
+Pop.AsyncCacheAssetAsImage(ColourFilename);
 
 class TMoonApp
 {
 	constructor()
 	{
 		this.Camera = new Pop.Camera();
+		this.Camera.FovVertical = 20;
 	}
 }
 
@@ -77,15 +82,21 @@ const MoonApp = new TMoonApp();
 //let MoonHeightmap = CreateRandomSphereImage(32,32);
 //op.AsyncCacheAssetAsString('Quad.vert.glsl');
 let MoonHeightmap = null;
+let MoonColour = null;
 
 function Render(RenderTarget)
 {
 	if ( !MoonHeightmap )
 	{
-		MoonHeightmap = new Pop.Image('ldem_16_uint.jpg');
+		MoonHeightmap = new Pop.Image(HeightmapFilename);
 		MoonHeightmap.SetLinearFilter(true);
 	}
-	
+	if ( !MoonColour )
+	{
+		MoonColour = new Pop.Image(ColourFilename);
+		MoonColour.SetLinearFilter(true);
+	}
+
 	RenderTarget.ClearColour( 0,1.0,0 );
 	const Quad = GetAsset('Quad',RenderTarget);
 	const Shader = GetAsset(RenderHeightmapShader,RenderTarget);
@@ -107,6 +118,7 @@ function Render(RenderTarget)
 		Shader.SetUniform('LocalToWorldTransform',LocalToWorldTransform);
 		Shader.SetUniform('WorldToLocalTransform',WorldToLocalTransform);
 		Shader.SetUniform('HeightmapTexture',MoonHeightmap);
+		Shader.SetUniform('ColourTexture',MoonColour);
 	}
 	//RenderTarget.EnableBlend(true);
 	RenderTarget.DrawGeometry( Quad, Shader, SetUniforms );
