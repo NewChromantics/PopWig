@@ -81,7 +81,10 @@ let MoonHeightmap = null;
 function Render(RenderTarget)
 {
 	if ( !MoonHeightmap )
+	{
 		MoonHeightmap = new Pop.Image('ldem_16_uint.jpg');
+		MoonHeightmap.SetLinearFilter(true);
+	}
 	
 	RenderTarget.ClearColour( 0,1.0,0 );
 	const Quad = GetAsset('Quad',RenderTarget);
