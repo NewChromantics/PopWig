@@ -4,11 +4,14 @@ in vec2 uv;
 uniform mat4 ScreenToCameraTransform;
 uniform mat4 CameraToWorldTransform;
 
-const float TerrainHeightScalar = 3.4;
-const float PositionToHeightmapScale = 0.009;
+uniform float TerrainHeightScalar;
+uniform float PositionToHeightmapScale;
 uniform sampler2D HeightmapTexture;
 uniform sampler2D ColourTexture;
-const bool SquareStep = true;
+uniform bool SquareStep;
+uniform bool DrawColour;
+uniform bool DrawHeight;
+uniform float BrightnessMult;
 
 struct TRay
 {
@@ -93,15 +96,20 @@ float4 RayMarchHeightmap(vec3 ro,vec3 rd,out float resT,out float3 Intersection)
 
 			TerrainHeight = GetTerrainHeight( p.xz, uv );
 			
-			//resT = t - 0.5/**dt*/;
 			Intersection = p;
 			
-			float3 Rgb = texture2D( ColourTexture, uv ).xyz;
-			/*
-			float Brightness = TerrainHeight * (1.0 / TerrainHeightScalar);
-			Rgb = float3( 1.0-uv.x, uv.y, 1.0 );
-			Rgb *= Brightness * 1.5;
-			*/
+			float3 Rgb = float3(1,1,1);
+			
+			if ( DrawColour )
+				Rgb = texture2D( ColourTexture, uv ).xyz;
+			else
+				Rgb = float3( 1.0-uv.x, uv.y, 1.0 );
+			
+			if ( DrawHeight )
+			{
+				float Brightness = TerrainHeight * (1.0 / TerrainHeightScalar);
+				Rgb *= Brightness * BrightnessMult;
+			}
 			return float4( Rgb, 1 );
 		}
 		lh = h;

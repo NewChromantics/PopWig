@@ -15,20 +15,49 @@ SetGlobal.call(this);
 
 const RenderHeightmapShader = RegisterShaderAssetFilename('HeightMap.frag.glsl','Quad.vert.glsl');
 
-//const ColourFilename = 'lroc_color_poles_4k.jpg';
-const ColourFilename = 'lroc_color_poles_16k.jpg';
+const ColourFilename = 'lroc_color_poles_4k.jpg';
+//const ColourFilename = 'lroc_color_poles_16k.jpg';
 const HeightmapFilename = 'ldem_16_uint.jpg';
 Pop.AsyncCacheAssetAsString('HeightMap.frag.glsl');
 Pop.AsyncCacheAssetAsString('Quad.vert.glsl');
 Pop.AsyncCacheAssetAsImage(HeightmapFilename);
 Pop.AsyncCacheAssetAsImage(ColourFilename);
 
+
+
+var Params = {};
+function OnParamsChanged()
+{
+	
+}
+Params.SquareStep = true;
+Params.DrawColour = true;
+Params.DrawHeight = true;
+Params.TerrainHeightScalar = 2.66;
+Params.PositionToHeightmapScale = 0.009;
+Params.Fov = 52;
+Params.BrightnessMult = 1.8;
+
+const ParamsWindowRect = [1200,20,350,200];
+var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRect);
+ParamsWindow.AddParam('SquareStep');
+ParamsWindow.AddParam('DrawColour');
+ParamsWindow.AddParam('DrawHeight');
+ParamsWindow.AddParam('TerrainHeightScalar',0,5);
+ParamsWindow.AddParam('PositionToHeightmapScale',0,1);
+ParamsWindow.AddParam('TerrainHeightScalar',0,5);
+ParamsWindow.AddParam('Fov',10,90);
+ParamsWindow.AddParam('BrightnessMult',0,3);
+
+
 class TMoonApp
 {
 	constructor()
 	{
 		this.Camera = new Pop.Camera();
-		this.Camera.FovVertical = 20;
+		this.Camera.LookAt = [71.5,-5,-30.3];
+		this.Camera.Position = [69.8,3.35,-48.7];
+
 	}
 }
 
@@ -97,6 +126,9 @@ function Render(RenderTarget)
 		MoonColour.SetLinearFilter(true);
 	}
 
+	MoonApp.Camera.FovVertical = Params.Fov;
+	
+	
 	RenderTarget.ClearColour( 0,1.0,0 );
 	const Quad = GetAsset('Quad',RenderTarget);
 	const Shader = GetAsset(RenderHeightmapShader,RenderTarget);
@@ -119,6 +151,12 @@ function Render(RenderTarget)
 		Shader.SetUniform('WorldToLocalTransform',WorldToLocalTransform);
 		Shader.SetUniform('HeightmapTexture',MoonHeightmap);
 		Shader.SetUniform('ColourTexture',MoonColour);
+		
+		function SetUniform(Key)
+		{
+			Shader.SetUniform( Key, Params[Key] );
+		}
+		Object.keys(Params).forEach(SetUniform);
 	}
 	//RenderTarget.EnableBlend(true);
 	RenderTarget.DrawGeometry( Quad, Shader, SetUniforms );
