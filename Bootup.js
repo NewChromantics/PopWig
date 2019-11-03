@@ -35,10 +35,11 @@ Params.SquareStep = true;
 Params.DrawColour = true;
 Params.DrawHeight = true;
 Params.BigImage = false;
-Params.TerrainHeightScalar = 2.66;
+Params.TerrainHeightScalar = 1.70;
 Params.PositionToHeightmapScale = 0.009;
 Params.Fov = 52;
 Params.BrightnessMult = 1.8;
+Params.HeightMapStepBack = 0.23;
 
 const ParamsWindowRect = [1200,20,350,200];
 var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRect);
@@ -46,11 +47,12 @@ ParamsWindow.AddParam('SquareStep');
 ParamsWindow.AddParam('DrawColour');
 ParamsWindow.AddParam('DrawHeight');
 ParamsWindow.AddParam('BigImage');
-ParamsWindow.AddParam('TerrainHeightScalar',0,5);
+ParamsWindow.AddParam('TerrainHeightScalar',0.001,5);
 ParamsWindow.AddParam('PositionToHeightmapScale',0,1);
 ParamsWindow.AddParam('TerrainHeightScalar',0,5);
 ParamsWindow.AddParam('Fov',10,90);
 ParamsWindow.AddParam('BrightnessMult',0,3);
+ParamsWindow.AddParam('HeightMapStepBack',0,1);
 
 
 class TMoonApp
@@ -58,8 +60,8 @@ class TMoonApp
 	constructor()
 	{
 		this.Camera = new Pop.Camera();
-		this.Camera.LookAt = [71.5,-5,-30.3];
-		this.Camera.Position = [69.8,3.35,-48.7];
+		//this.Camera.LookAt = [71.5,-5,-30.3];
+		//this.Camera.Position = [69.8,3.35,-48.7];
 
 	}
 }
