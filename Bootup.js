@@ -35,6 +35,7 @@ Params.SquareStep = true;
 Params.DrawColour = true;
 Params.DrawHeight = true;
 Params.BigImage = false;
+Params.DrawStepHeat = false;
 Params.TerrainHeightScalar = 1.70;
 Params.PositionToHeightmapScale = 0.009;
 Params.Fov = 52;
@@ -46,6 +47,7 @@ var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRec
 ParamsWindow.AddParam('SquareStep');
 ParamsWindow.AddParam('DrawColour');
 ParamsWindow.AddParam('DrawHeight');
+ParamsWindow.AddParam('DrawStepHeat');
 ParamsWindow.AddParam('BigImage');
 ParamsWindow.AddParam('TerrainHeightScalar',0.001,5);
 ParamsWindow.AddParam('PositionToHeightmapScale',0,1);

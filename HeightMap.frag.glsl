@@ -11,6 +11,7 @@ uniform sampler2D ColourTexture;
 uniform bool SquareStep;
 uniform bool DrawColour;
 uniform bool DrawHeight;
+uniform bool DrawStepHeat;
 uniform float BrightnessMult;
 uniform float HeightMapStepBack;
 
@@ -70,7 +71,7 @@ float4 RayMarchHeightmap(vec3 ro,vec3 rd,out float resT,out float3 Intersection)
 {
 	const float mint = 0.501;
 	const float maxt = 40.0;
-	const int Steps = 80;
+	const int Steps = 20;
 	float lh = 0.0;
 	float ly = 0.0;
 	
@@ -190,7 +191,22 @@ float DistanceToMoon(float3 Position,out float3 Colour)
 	return Distance;
 }
 
-float4 RayMarchSphere(TRay Ray)
+float3 NormalToRedGreen(float Normal)
+{
+	if ( Normal < 0.5 )
+	{
+		Normal /= 0.5;
+		return float3( 1.0, Normal, 0.0 );
+	}
+	else
+	{
+		Normal -= 0.5;
+		Normal /= 0.5;
+		return float3( 1.0-Normal, 1.0, 0.0 );
+	}
+}
+
+float4 RayMarchSphere(TRay Ray,out float StepHeat)
 {
 	const float MinDistance = 0.001;
 	const float CloseEnough = MinDistance;
@@ -202,6 +218,7 @@ float4 RayMarchSphere(TRay Ray)
 
 	for ( int s=0;	s<MaxSteps;	s++ )
 	{
+		StepHeat = float(s)/float(MaxSteps);
 		vec3 Position = Ray.Pos + Ray.Dir * RayTime;
 		float3 MoonColour;
 		float MoonDistance = DistanceToMoon( Position, MoonColour );
@@ -219,6 +236,7 @@ float4 RayMarchSphere(TRay Ray)
 			return float4(0,0,1,0);
 		}
 	}
+	StepHeat = 1.0;
 	return float4(1,0,0,0);
 }
 
@@ -227,7 +245,10 @@ void main()
 	TRay Ray = GetWorldRay();
 	float4 Colour = float4(0,0,0,1);
 	
-	float4 SphereColour = RayMarchSphere( Ray );
+	float StepHeat;
+	float4 SphereColour = RayMarchSphere( Ray, StepHeat );
+	if ( DrawStepHeat )
+		SphereColour.xyz = NormalToRedGreen( 1.0 - StepHeat );
 	/*
 	float3 Intersection;
 	float t = 0.0;
