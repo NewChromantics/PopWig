@@ -3,7 +3,17 @@
 <head>
 	<link rel="stylesheet" type="text/css" href="Editor_win95.css" />
 <style>
-
+	/* disable scrolling on ios
+	 https://stackoverflow.com/a/57489918/355753
+	 */
+html, body
+{
+	position:	fixed;
+	width:		100vw;
+	height:		100vh;
+	margin:		0px;
+	padding:	0px;
+}
 
 </style>
 </head>
