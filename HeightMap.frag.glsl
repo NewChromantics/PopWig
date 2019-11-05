@@ -144,7 +144,7 @@ float2 ViewToEquirect(float3 View3)
 	return uv;
 }
 
-void GetMoonColourHeight(float3 MoonNormal,out float3 Colour,out float Height)
+void GetMoonHeight(float3 MoonNormal,out float Height)
 {
 	float2 HeightmapUv = ViewToEquirect( MoonNormal );
 	
@@ -154,6 +154,31 @@ void GetMoonColourHeight(float3 MoonNormal,out float3 Colour,out float Height)
 	//Colour = float3( HeightmapUv, 0.5 );
 	
 	Height *= TerrainHeightScalar;
+	/*
+	float3 Rgb;
+	float2 uv = HeightmapUv;
+	if ( DrawColour )
+		Rgb = texture2D( ColourTexture, uv ).xyz;
+	else
+		Rgb = float3( 1.0-uv.x, uv.y, 1.0 );
+	
+	if ( DrawHeight )
+	{
+		float Brightness = Height * (1.0 / TerrainHeightScalar);
+		Rgb *= Brightness * BrightnessMult;
+	}
+	Colour = Rgb;
+	*/
+}
+
+
+void GetMoonColourHeight(float3 MoonNormal,out float3 Colour,out float Height)
+{
+	GetMoonHeight( MoonNormal, Height );
+	float2 HeightmapUv = ViewToEquirect( MoonNormal );
+	
+	//	debug uv
+	//Colour = float3( HeightmapUv, 0.5 );
 	
 	float3 Rgb;
 	float2 uv = HeightmapUv;
@@ -170,7 +195,10 @@ void GetMoonColourHeight(float3 MoonNormal,out float3 Colour,out float Height)
 	Colour = Rgb;
 }
 
-float DistanceToMoon(float3 Position,out float3 Colour)
+
+
+
+float DistanceToMoon(float3 Position)
 {
 	float3 DeltaToSurface = MoonSphere.xyz - Position;
 	float3 Normal = -normalize( DeltaToSurface );
@@ -178,7 +206,7 @@ float DistanceToMoon(float3 Position,out float3 Colour)
 	float3 MoonSurfacePoint = MoonSphere.xyz + Normal * MoonRadius;
 	
 	float Height;
-	GetMoonColourHeight( Normal, Colour, Height );
+	GetMoonHeight( Normal, Height );
 	
 	MoonSurfacePoint += Normal * Height;
 	
@@ -190,6 +218,21 @@ float DistanceToMoon(float3 Position,out float3 Colour)
 	
 	return Distance;
 }
+
+float3 GetMoonColour(float3 Position)
+{
+	//	duplicate code!
+	float3 DeltaToSurface = MoonSphere.xyz - Position;
+	float3 Normal = -normalize( DeltaToSurface );
+	float MoonRadius = MoonSphere.w;
+	float3 MoonSurfacePoint = MoonSphere.xyz + Normal * MoonRadius;
+	
+	float Height;
+	float3 Colour;
+	GetMoonColourHeight( Normal, Colour, Height );
+	return Colour;
+}
+
 
 float3 NormalToRedGreen(float Normal)
 {
@@ -206,38 +249,47 @@ float3 NormalToRedGreen(float Normal)
 	}
 }
 
-float4 RayMarchSphere(TRay Ray,out float StepHeat)
+
+
+//	returns intersction pos, w=success
+float4 RayMarchSpherePos(TRay Ray,out float StepHeat)
 {
 	const float MinDistance = 0.001;
 	const float CloseEnough = MinDistance;
 	const float MinStep = MinDistance;
 	const float MaxDistance = 100.0;
-	const int MaxSteps = 200;
+	const int MaxSteps = 50;
 	
 	float RayTime = 0.01;
-
+	
 	for ( int s=0;	s<MaxSteps;	s++ )
 	{
 		StepHeat = float(s)/float(MaxSteps);
 		vec3 Position = Ray.Pos + Ray.Dir * RayTime;
-		float3 MoonColour;
-		float MoonDistance = DistanceToMoon( Position, MoonColour );
+		float MoonDistance = DistanceToMoon( Position );
 		float HitDistance = MoonDistance;
 		
 		//RayTime += max( HitDistance, MinStep );
 		RayTime += HitDistance;
 		if ( HitDistance < CloseEnough )
-		{
-			return float4(MoonColour,1);
-		}
+			return float4(Position,1);
 		
-		else if (RayTime > MaxDistance)
-		{
-			return float4(0,0,1,0);
-		}
+		if (RayTime > MaxDistance)
+			return float4(Position,0);
 	}
 	StepHeat = 1.0;
-	return float4(1,0,0,0);
+	return float4(0,0,0,-1);
+}
+
+
+float4 RayMarchSphere(TRay Ray,out float StepHeat)
+{
+	float4 Intersection = RayMarchSpherePos( Ray, StepHeat );
+	//if ( Intersection.w < 0.0 )
+	//	return float4(1,0,0,0);
+	
+	float3 Colour = GetMoonColour( Intersection.xyz );
+	return float4( Colour, Intersection.w );
 }
 
 void main()
