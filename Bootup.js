@@ -40,7 +40,7 @@ Params.TerrainHeightScalar = 1.70;
 Params.PositionToHeightmapScale = 0.009;
 Params.Fov = 52;
 Params.BrightnessMult = 1.8;
-Params.HeightMapStepBack = 0.23;
+Params.HeightMapStepBack = 0.30;
 
 const ParamsWindowRect = [1200,20,350,200];
 var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRect);
@@ -210,11 +210,11 @@ MoveCamera = function(x,y,Button,FirstDown)
 	
 	//if ( Button == 0 )
 	//	this.Camera.OnCameraPan( x, 0, y, FirstDown );
-	if ( Button == 1 )
+	if ( Button == 0 )
 		Camera.OnCameraOrbit( x, y, 0, FirstDown );
 	if ( Button == 2 )
 		Camera.OnCameraPanLocal( x, y, 0, FirstDown );
-	if ( Button == 0 )
+	if ( Button == 1 )
 		Camera.OnCameraPanLocal( x, 0, y, FirstDown );
 }
 
