@@ -38,10 +38,10 @@ Params.DrawStepHeat = false;
 Params.DrawUv = false;
 Params.ApplyAmbientOcclusionColour = true;
 Params.ApplyHeightColour = false;
-Params.AmbientOcclusionMin = 0;
-Params.AmbientOcclusionMax = 1;
-Params.BaseColour = [0.5,0.5,0.5];
-Params.BackgroundColour = [1,0,0];
+Params.AmbientOcclusionMin = 0.21;
+Params.AmbientOcclusionMax = 0.66;
+Params.BaseColour = [0.99,0.98,0.95];
+Params.BackgroundColour = [0,0,0];
 Params.BigImage = false;
 Params.TerrainHeightScalar = 1.70;
 Params.PositionToHeightmapScale = 0.009;
@@ -59,6 +59,8 @@ ParamsWindow.AddParam('ApplyAmbientOcclusionColour');
 ParamsWindow.AddParam('AmbientOcclusionMin',0,1);
 ParamsWindow.AddParam('AmbientOcclusionMax',0,1);
 ParamsWindow.AddParam('ApplyHeightColour');
+ParamsWindow.AddParam('BaseColour','Colour');
+ParamsWindow.AddParam('BackgroundColour','Colour');
 ParamsWindow.AddParam('BigImage');
 ParamsWindow.AddParam('TerrainHeightScalar',0.001,5);
 ParamsWindow.AddParam('PositionToHeightmapScale',0,1);
@@ -73,6 +75,7 @@ class TMoonApp
 	constructor()
 	{
 		this.Camera = new Pop.Camera();
+		this.Camera.Position[2] = this.Camera.LookAt[2] + 25;
 		//this.Camera.LookAt = [71.5,-5,-30.3];
 		//this.Camera.Position = [69.8,3.35,-48.7];
 

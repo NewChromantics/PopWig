@@ -279,7 +279,7 @@ float4 RayMarchSpherePos(TRay Ray,out float StepHeat)
 	const float CloseEnough = MinDistance;
 	const float MinStep = MinDistance;
 	const float MaxDistance = 100.0;
-	const int MaxSteps = 50;
+	const int MaxSteps = 60;
 	
 	float RayTime = 0.01;
 	
@@ -295,9 +295,11 @@ float4 RayMarchSpherePos(TRay Ray,out float StepHeat)
 		if ( HitDistance < CloseEnough )
 			return float4(Position,1);
 		
+		//	ray gone too far
 		if (RayTime > MaxDistance)
 			return float4(Position,0);
 	}
+	//	ray never got close enough
 	StepHeat = 1.0;
 	return float4(0,0,0,-1);
 }
@@ -328,6 +330,7 @@ void main()
 		float Mult = Range01( AmbientOcclusionMin, AmbientOcclusionMax, 1.0-StepHeat );
 		SphereColour.xyz *= Mult;
 	}
+
 	/*
 	float3 Intersection;
 	float t = 0.0;
@@ -336,7 +339,7 @@ void main()
 	
 	Colour = mix( Colour, HeightmapColour, HeightmapColour.w );
 	*/
-	Colour = mix( Colour, SphereColour, SphereColour.w );
+	Colour = mix( Colour, SphereColour, max(0.0,SphereColour.w) );
 	gl_FragColor = Colour;
 }
 
