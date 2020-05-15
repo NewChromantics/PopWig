@@ -12,8 +12,15 @@ uniform bool SquareStep;
 uniform bool DrawColour;
 uniform bool DrawHeight;
 uniform bool DrawStepHeat;
-uniform float BrightnessMult;
+uniform bool DrawUv;
+uniform bool ApplyAmbientOcclusionColour;
+uniform bool ApplyHeightColour;
+uniform float AmbientOcclusionMin;
+uniform float AmbientOcclusionMax;
+uniform float BrightnessMult;	//	mult on height colour
 uniform float HeightMapStepBack;
+uniform float3 BaseColour;
+uniform float3 BackgroundColour;
 
 const float4 MoonSphere = float4(0,0,0,10);
 
@@ -46,6 +53,31 @@ TRay GetWorldRay()
 	Ray.Dir = -normalize( Ray.Dir );
 	return Ray;
 }
+
+float Range(float Min,float Max,float Value)
+{
+	return (Value-Min) / (Max-Min);
+}
+float Range01(float Min,float Max,float Value)
+{
+	return clamp(0.0,1.0,Range(Min,Max,Value));
+}
+
+float3 NormalToRedGreen(float Normal)
+{
+	if ( Normal < 0.5 )
+	{
+		Normal /= 0.5;
+		return float3( 1.0, Normal, 0.0 );
+	}
+	else
+	{
+		Normal -= 0.5;
+		Normal /= 0.5;
+		return float3( 1.0-Normal, 1.0, 0.0 );
+	}
+}
+
 
 vec3 GetRayPositionAtTime(TRay Ray,float Time)
 {
@@ -184,10 +216,14 @@ void GetMoonColourHeight(float3 MoonNormal,out float3 Colour,out float Height)
 	float2 uv = HeightmapUv;
 	if ( DrawColour )
 		Rgb = texture2D( ColourTexture, uv ).xyz;
-	else
+	else if ( DrawUv )
 		Rgb = float3( 1.0-uv.x, uv.y, 1.0 );
+	else if ( DrawHeight )
+		Rgb = NormalToRedGreen(Height);
+	else
+		Rgb = BaseColour;
 	
-	if ( DrawHeight )
+	if ( ApplyHeightColour )
 	{
 		float Brightness = Height * (1.0 / TerrainHeightScalar);
 		Rgb *= Brightness * BrightnessMult;
@@ -233,21 +269,6 @@ float3 GetMoonColour(float3 Position)
 	return Colour;
 }
 
-
-float3 NormalToRedGreen(float Normal)
-{
-	if ( Normal < 0.5 )
-	{
-		Normal /= 0.5;
-		return float3( 1.0, Normal, 0.0 );
-	}
-	else
-	{
-		Normal -= 0.5;
-		Normal /= 0.5;
-		return float3( 1.0-Normal, 1.0, 0.0 );
-	}
-}
 
 
 
@@ -295,12 +316,18 @@ float4 RayMarchSphere(TRay Ray,out float StepHeat)
 void main()
 {
 	TRay Ray = GetWorldRay();
-	float4 Colour = float4(0,0,0,1);
+	float4 Colour = float4(BackgroundColour,1);
 	
 	float StepHeat;
 	float4 SphereColour = RayMarchSphere( Ray, StepHeat );
 	if ( DrawStepHeat )
 		SphereColour.xyz = NormalToRedGreen( 1.0 - StepHeat );
+	
+	if ( ApplyAmbientOcclusionColour )
+	{
+		float Mult = Range01( AmbientOcclusionMin, AmbientOcclusionMax, 1.0-StepHeat );
+		SphereColour.xyz *= Mult;
+	}
 	/*
 	float3 Intersection;
 	float t = 0.0;

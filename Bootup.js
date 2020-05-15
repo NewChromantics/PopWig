@@ -32,22 +32,33 @@ function OnParamsChanged()
 	
 }
 Params.SquareStep = true;
-Params.DrawColour = true;
-Params.DrawHeight = true;
-Params.BigImage = false;
+Params.DrawColour = false;
+Params.DrawHeight = false;
 Params.DrawStepHeat = false;
+Params.DrawUv = false;
+Params.ApplyAmbientOcclusionColour = true;
+Params.ApplyHeightColour = false;
+Params.AmbientOcclusionMin = 0;
+Params.AmbientOcclusionMax = 1;
+Params.BaseColour = [0.5,0.5,0.5];
+Params.BackgroundColour = [1,0,0];
+Params.BigImage = false;
 Params.TerrainHeightScalar = 1.70;
 Params.PositionToHeightmapScale = 0.009;
 Params.Fov = 52;
 Params.BrightnessMult = 1.8;
 Params.HeightMapStepBack = 0.30;
 
-const ParamsWindowRect = [1200,20,350,200];
+const ParamsWindowRect = [800,20,350,200];
 var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRect);
 ParamsWindow.AddParam('SquareStep');
 ParamsWindow.AddParam('DrawColour');
 ParamsWindow.AddParam('DrawHeight');
 ParamsWindow.AddParam('DrawStepHeat');
+ParamsWindow.AddParam('ApplyAmbientOcclusionColour');
+ParamsWindow.AddParam('AmbientOcclusionMin',0,1);
+ParamsWindow.AddParam('AmbientOcclusionMax',0,1);
+ParamsWindow.AddParam('ApplyHeightColour');
 ParamsWindow.AddParam('BigImage');
 ParamsWindow.AddParam('TerrainHeightScalar',0.001,5);
 ParamsWindow.AddParam('PositionToHeightmapScale',0,1);
