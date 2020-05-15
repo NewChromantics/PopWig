@@ -32,7 +32,7 @@ function OnParamsChanged()
 	
 }
 Params.SquareStep = true;
-Params.DrawColour = false;
+Params.DrawColour = true;
 Params.DrawHeight = false;
 Params.DrawStepHeat = false;
 Params.DrawUv = false;
@@ -40,10 +40,11 @@ Params.ApplyAmbientOcclusionColour = true;
 Params.ApplyHeightColour = false;
 Params.AmbientOcclusionMin = 0.21;
 Params.AmbientOcclusionMax = 0.66;
+Params.TextureSampleColourMult = 1.41;
 Params.BaseColour = [0.99,0.98,0.95];
 Params.BackgroundColour = [0,0,0];
 Params.BigImage = false;
-Params.TerrainHeightScalar = 1.70;
+Params.TerrainHeightScalar = 0.74;
 Params.PositionToHeightmapScale = 0.009;
 Params.Fov = 52;
 Params.BrightnessMult = 1.8;
@@ -55,6 +56,7 @@ ParamsWindow.AddParam('SquareStep');
 ParamsWindow.AddParam('DrawColour');
 ParamsWindow.AddParam('DrawHeight');
 ParamsWindow.AddParam('DrawStepHeat');
+ParamsWindow.AddParam('TextureSampleColourMult',0,2);
 ParamsWindow.AddParam('ApplyAmbientOcclusionColour');
 ParamsWindow.AddParam('AmbientOcclusionMin',0,1);
 ParamsWindow.AddParam('AmbientOcclusionMax',0,1);
@@ -62,7 +64,6 @@ ParamsWindow.AddParam('ApplyHeightColour');
 ParamsWindow.AddParam('BaseColour','Colour');
 ParamsWindow.AddParam('BackgroundColour','Colour');
 ParamsWindow.AddParam('BigImage');
-ParamsWindow.AddParam('TerrainHeightScalar',0.001,5);
 ParamsWindow.AddParam('PositionToHeightmapScale',0,1);
 ParamsWindow.AddParam('TerrainHeightScalar',0,5);
 ParamsWindow.AddParam('Fov',10,90);

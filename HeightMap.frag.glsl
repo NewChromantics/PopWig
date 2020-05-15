@@ -21,6 +21,7 @@ uniform float BrightnessMult;	//	mult on height colour
 uniform float HeightMapStepBack;
 uniform float3 BaseColour;
 uniform float3 BackgroundColour;
+uniform float TextureSampleColourMult;
 
 const float4 MoonSphere = float4(0,0,0,10);
 
@@ -212,16 +213,19 @@ void GetMoonColourHeight(float3 MoonNormal,out float3 Colour,out float Height)
 	//	debug uv
 	//Colour = float3( HeightmapUv, 0.5 );
 	
-	float3 Rgb;
+	float3 Rgb = float3(1.0,1.0,1.0);
 	float2 uv = HeightmapUv;
 	if ( DrawColour )
+	{
 		Rgb = texture2D( ColourTexture, uv ).xyz;
+		Rgb *= TextureSampleColourMult;
+	}
 	else if ( DrawUv )
 		Rgb = float3( 1.0-uv.x, uv.y, 1.0 );
 	else if ( DrawHeight )
 		Rgb = NormalToRedGreen(Height);
-	else
-		Rgb = BaseColour;
+
+	Rgb *= BaseColour;
 	
 	if ( ApplyHeightColour )
 	{
