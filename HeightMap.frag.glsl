@@ -329,9 +329,21 @@ float4 RayMarchSphere(TRay Ray,out float StepHeat)
 	return float4( Colour, Intersection.w );
 }
 
+
+const bool Debug_Ray = true;
+
 void main()
 {
 	TRay Ray = GetWorldRay();
+	
+	if ( Debug_Ray )
+	{
+		gl_FragColor.xyz = Ray.Dir;
+		gl_FragColor.w = 1.0;
+		return;
+	}
+	
+	
 	float4 Colour = float4(BackgroundColour,1);
 	
 	float StepHeat;
