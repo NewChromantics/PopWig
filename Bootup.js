@@ -49,13 +49,12 @@ Params.AmbientOcclusionMin = 0.21;
 Params.AmbientOcclusionMax = 0.66;
 Params.TextureSampleColourMult = 1.41;
 Params.TextureSampleColourAdd = 0.1;
-Params.BaseColour = [0.99,0.98,0.95];
+Params.BaseColour = [0.91,0.85,0.75];
 Params.BackgroundColour = [0,0,0];
-Params.BigImage = false;
 Params.TerrainHeightScalar = 0.074;
 Params.Fov = 52;
 Params.BrightnessMult = 1.8;
-Params.HeightMapStepBack = 0.6;//0.30;
+Params.HeightMapStepBack = 0.5;//0.30;
 Params.MoonSphere = [0,0,-2,1];
 Params.DebugClearEyes = false;
 
@@ -151,44 +150,32 @@ Pop.CreateColourTexture = function(Colour4)
 
 
 const MoonApp = new TMoonApp();
-//let MoonHeightmap = CreateRandomSphereImage(32,32);
-//op.AsyncCacheAssetAsString('Quad.vert.glsl');
-let MoonHeightmap = EnableImages ? null : Pop.CreateColourTexture([0,0,0,1]);
-let MoonColour4k = EnableImages ? null : Pop.CreateColourTexture([0,1,0,1]);
-let MoonColour16k = null;
 
 
+let MoonColourTexture = Pop.CreateColourTexture([0.1,0.8,0.8,1]);
+let MoonDepthTexture = Pop.CreateColourTexture([0,0,0,1]);
 
+async function LoadAssets()
+{
+	//	start loads together
+	const DepthPromise = Pop.LoadFileAsImageAsync(HeightmapFilename);
+	const ColourPromise = Pop.LoadFileAsImageAsync(ColourFilename);
+
+	//	set new textures
+	MoonDepthTexture = await DepthPromise;
+	MoonDepthTexture.SetLinearFilter(true);
+	MoonColourTexture = await ColourPromise;
+	MoonColourTexture.SetLinearFilter(true);
+}
+LoadAssets();
+
+
+	
+	
 function Render(RenderTarget,Camera)
 {
 	const RenderContext = RenderTarget.GetRenderContext();
 	
-	if ( !MoonHeightmap )
-	{
-		MoonHeightmap = new Pop.Image(HeightmapFilename);
-		MoonHeightmap.SetLinearFilter(true);
-	}
-	
-	let MoonColour;
-	if ( Params.BigImage )
-	{
-		if ( !MoonColour16k )
-		{
-			MoonColour16k = new Pop.Image(Colour16kFilename);
-			MoonColour16k.SetLinearFilter(true);
-		}
-		MoonColour = MoonColour16k;
-	}
-	else
-	{
-		if ( !MoonColour4k )
-		{
-			MoonColour4k = new Pop.Image(Colour4kFilename);
-			MoonColour4k.SetLinearFilter(true);
-		}
-		MoonColour = MoonColour4k;
-	}
-
 	if ( !Params.DebugClearEyes )
 		RenderTarget.ClearColour( ...Params.BackgroundColour );
 	else if ( Camera.Name == 'left' )
@@ -211,6 +198,12 @@ function Render(RenderTarget,Camera)
 	const WorldToLocalTransform = Math.MatrixInverse4x4(LocalToWorldTransform);
 	//Pop.Debug("Camera frustum LocalToWorldTransform",LocalToWorldTransform);
 	//Pop.Debug("Camera frustum WorldToLocalTransform",WorldToLocalTransform);
+	
+	//	these should be GetAsset
+	const Colour = MoonColourTexture;
+	const Heightmap = MoonDepthTexture;
+	
+	
 	const SetUniforms = function(Shader)
 	{
 		Shader.SetUniform('VertexRect',[0,0,1,1.0]);
@@ -218,8 +211,8 @@ function Render(RenderTarget,Camera)
 		Shader.SetUniform('CameraToWorldTransform',CameraToWorldTransform);
 		Shader.SetUniform('LocalToWorldTransform',LocalToWorldTransform);
 		Shader.SetUniform('WorldToLocalTransform',WorldToLocalTransform);
-		Shader.SetUniform('HeightmapTexture',MoonHeightmap);
-		Shader.SetUniform('ColourTexture',MoonColour);
+		Shader.SetUniform('HeightmapTexture',Heightmap);
+		Shader.SetUniform('ColourTexture',Colour);
 		
 		function SetUniform(Key)
 		{
