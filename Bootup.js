@@ -283,7 +283,19 @@ async function XrLoop(RenderContext)
 {
 	while(true)
 	{
-		const Device = await Pop.Xr.CreateDevice(RenderContext);
+		function StartCallback(OnClicked)
+		{
+			function OnClick()
+			{
+				OnClicked();
+				Button.SetStyle('visibility','hidden');
+			}
+			const Button = new Pop.Gui.Button('GotoXrButton');
+			Button.SetStyle('visibility','visible');
+			Button.OnClicked = OnClick;
+		}
+		
+		const Device = await Pop.Xr.CreateDevice(RenderContext,StartCallback);
 		Device.OnRender = Render;
 		await Device.WaitForEnd();
 		Pop.Debug(`XR device ended`);
@@ -295,13 +307,7 @@ function InitXr()
 	if ( !Pop.Xr.IsSupported() )
 		return;
 	
-	function StartXr()
-	{
-		XrLoop(Window).catch(Pop.Debug);
-	}
-	const Button = new Pop.Gui.Button('GotoXrButton');
-	Button.SetStyle('visibility','visible');
-	Button.OnClicked = StartXr;
+	XrLoop(Window).catch(Pop.Debug);
 }
 InitXr();
 
