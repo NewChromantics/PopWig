@@ -13,13 +13,15 @@ function SetGlobal()
 SetGlobal.call(this);
 
 const Earth = Pop.GetExeArguments().Earth;
+//const EnableImages = Pop.GetExeArguments().NoImages!==undefined;
+const EnableImages = false;
 
 const RenderHeightmapShader = RegisterShaderAssetFilename('HeightMap.frag.glsl','Quad.vert.glsl');
 
-const Colour4kFilename = Earth ? 'Earth_ColourMay_4096.jpg' : 'lroc_color_poles_4k.jpg';
-const Colour16kFilename = Earth ? 'Earth_ColourMay_4096.jpg' : 'lroc_color_poles_16k.jpg';
+const Colour4kFilename = Earth ? 'Earth_ColourMay_4096.jpg' : EnableImages ? 'lroc_color_poles_4k.jpg' : null;
+const Colour16kFilename = Earth ? 'Earth_ColourMay_4096.jpg' : EnableImages ? 'lroc_color_poles_16k.jpg' : null;
 //const HeightmapFilename = 'ldem_16_uint.jpg';
-const HeightmapFilename = Earth ? 'Earth_Heightmap_4096.png' : 'ldem_16_uint.jpg';
+const HeightmapFilename = Earth ? 'Earth_Heightmap_4096.png' : EnableImages ? 'ldem_16_uint.jpg' : null;
 Pop.AsyncCacheAssetAsString('HeightMap.frag.glsl');
 Pop.AsyncCacheAssetAsString('Quad.vert.glsl');
 Pop.AsyncCacheAssetAsImage(HeightmapFilename);
@@ -133,11 +135,22 @@ function CreateRandomSphereImage(Width,Height)
 	return Texture;
 }
 
+
+Pop.CreateColourTexture = function(Colour4)
+{
+	let NewTexture = new Pop.Image();
+	if ( Array.isArray(Colour4) )
+		Colour4 = new Float32Array(Colour4);
+	NewTexture.WritePixels( 1, 1, Colour4, 'Float4' );
+	return NewTexture;
+}
+
+
 const MoonApp = new TMoonApp();
 //let MoonHeightmap = CreateRandomSphereImage(32,32);
 //op.AsyncCacheAssetAsString('Quad.vert.glsl');
-let MoonHeightmap = null;
-let MoonColour4k = null;
+let MoonHeightmap = EnableImages ? null : Pop.CreateColourTexture([0,0,0,1]);
+let MoonColour4k = EnableImages ? null : Pop.CreateColourTexture([0,1,0,1]);
 let MoonColour16k = null;
 
 
