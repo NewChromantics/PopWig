@@ -57,6 +57,7 @@ Params.BrightnessMult = 1.8;
 Params.HeightMapStepBack = 0.5;//0.30;
 Params.MoonSphere = [0,0,-2,1];
 Params.DebugClearEyes = false;
+Params.XrToMouseScale = 100;	//	metres to pixels
 
 const ParamsWindowRect = [800,20,350,200];
 var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRect);
@@ -278,6 +279,14 @@ Window.OnMouseScroll = function(x,y,Button,Delta)
 	Camera.OnCameraPanLocal( 0, 0, Fly, false );
 }
 
+function XrToMouseFunc(xyz,Button,Controller)
+{
+	const MouseFunc = this;
+	const x = xyz[0] * Params.XrToMouseScale;
+	const y = xyz[1] * Params.XrToMouseScale;
+	return MouseFunc( x, y, Button );
+}
+
 //	setup xr mode
 async function XrLoop(RenderContext)
 {
@@ -297,6 +306,9 @@ async function XrLoop(RenderContext)
 		
 		const Device = await Pop.Xr.CreateDevice(RenderContext,StartCallback);
 		Device.OnRender = Render;
+		Device.OnMouseDown = XrToMouseFunc.bind(Window.OnMouseDown);
+		Device.OnMouseMove = XrToMouseFunc.bind(Window.OnMouseMove);
+		Device.OnMouseUp = XrToMouseFunc.bind(Window.OnMouseUp);
 		await Device.WaitForEnd();
 		Pop.Debug(`XR device ended`);
 	}
