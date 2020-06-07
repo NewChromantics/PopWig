@@ -25,7 +25,7 @@ uniform float TextureSampleColourMult;
 uniform float TextureSampleColourAdd;
 const bool FlipSample = true;
 
-#define MAX_STEPS	20
+#define MAX_STEPS	50
 
 const float4 MoonSphere = float4(0,0,0,10);
 

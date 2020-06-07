@@ -26,7 +26,7 @@ Pop.AsyncCacheAssetAsString('HeightMap.frag.glsl');
 Pop.AsyncCacheAssetAsString('Quad.vert.glsl');
 Pop.AsyncCacheAssetAsImage(HeightmapFilename);
 Pop.AsyncCacheAssetAsImage(Colour4kFilename);
-Pop.AsyncCacheAssetAsImage(Colour16kFilename);
+//Pop.AsyncCacheAssetAsImage(Colour16kFilename);
 
 
 
