@@ -13,15 +13,15 @@ function SetGlobal()
 SetGlobal.call(this);
 
 const Earth = Pop.GetExeArguments().Earth;
-//const EnableImages = Pop.GetExeArguments().NoImages!==undefined;
-const EnableImages = false;
+const EnableImages = Pop.GetExeArguments().EnableImages!==false;
+//const EnableImages = false;
 
 const RenderHeightmapShader = RegisterShaderAssetFilename('HeightMap.frag.glsl','Quad.vert.glsl');
 
-const Colour4kFilename = Earth ? 'Earth_ColourMay_4096.jpg' : EnableImages ? 'lroc_color_poles_4k.jpg' : null;
-const Colour16kFilename = Earth ? 'Earth_ColourMay_4096.jpg' : EnableImages ? 'lroc_color_poles_16k.jpg' : null;
+const Colour4kFilename = Earth ? 'Earth_ColourMay_4096.jpg' : 'lroc_color_poles_4k.jpg';
+const Colour16kFilename = Earth ? 'Earth_ColourMay_4096.jpg' : 'lroc_color_poles_16k.jpg';
 //const HeightmapFilename = 'ldem_16_uint.jpg';
-const HeightmapFilename = Earth ? 'Earth_Heightmap_4096.png' : EnableImages ? 'ldem_16_uint.jpg' : null;
+const HeightmapFilename = Earth ? 'Earth_Heightmap_4096.png' : 'ldem_16_uint.jpg';
 Pop.AsyncCacheAssetAsString('HeightMap.frag.glsl');
 Pop.AsyncCacheAssetAsString('Quad.vert.glsl');
 Pop.AsyncCacheAssetAsImage(HeightmapFilename);
@@ -61,6 +61,7 @@ ParamsWindow.AddParam('SquareStep');
 ParamsWindow.AddParam('DrawColour');
 ParamsWindow.AddParam('DrawHeight');
 ParamsWindow.AddParam('DrawStepHeat');
+ParamsWindow.AddParam('DrawUv');
 ParamsWindow.AddParam('TextureSampleColourMult',0,2);
 ParamsWindow.AddParam('TextureSampleColourAdd',-1,1);
 ParamsWindow.AddParam('ApplyAmbientOcclusionColour');

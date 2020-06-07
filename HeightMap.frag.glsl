@@ -39,24 +39,24 @@ vec3 ScreenToWorld(float2 uv,float z)
 {
 	float x = mix( -1.0, 1.0, uv.x );
 	float y = mix( 1.0, -1.0, uv.y );
-	vec4 ScreenPos4 = vec4( x, y, z, 1 );
+	vec4 ScreenPos4 = vec4( x, y, z, 1.0 );
 	vec4 CameraPos4 = ScreenToCameraTransform * ScreenPos4;
 	vec4 WorldPos4 = CameraToWorldTransform * CameraPos4;
 	vec3 WorldPos = WorldPos4.xyz / WorldPos4.w;
+	
 	return WorldPos;
 }
 
-TRay GetWorldRay()
+//	gr: returning a TRay, or using TRay as an out causes a very low-precision result...
+void GetWorldRay(out float3 RayPos,out float3 RayDir)
 {
 	float Near = 0.01;
-	float Far = 1000.0;
-	TRay Ray;
-	Ray.Pos = ScreenToWorld( uv, Near );
-	Ray.Dir = ScreenToWorld( uv, Far ) - Ray.Pos;
+	float Far = 100.0;
+	RayPos = ScreenToWorld( uv, Near );
+	RayDir = ScreenToWorld( uv, Far ) - RayPos;
 	
 	//	gr: this is backwards!
-	Ray.Dir = -normalize( Ray.Dir );
-	return Ray;
+	RayDir = -normalize( RayDir );
 }
 
 float Range(float Min,float Max,float Value)
@@ -332,20 +332,11 @@ float4 RayMarchSphere(TRay Ray,out float StepHeat)
 }
 
 
-const bool Debug_Ray = true;
 
 void main()
 {
-	TRay Ray = GetWorldRay();
-	
-	if ( Debug_Ray )
-	{
-		gl_FragColor.xyz = Ray.Dir;
-		gl_FragColor.w = 1.0;
-		return;
-	}
-	
-	
+	TRay Ray;
+	GetWorldRay(Ray.Pos,Ray.Dir);
 	float4 Colour = float4(BackgroundColour,1);
 	
 	float StepHeat;
