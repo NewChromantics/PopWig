@@ -29,14 +29,13 @@ Pop.AsyncCacheAssetAsImage(Colour4kFilename);
 //Pop.AsyncCacheAssetAsImage(Colour16kFilename);
 
 
-
 var Params = {};
 function OnParamsChanged()
 {
 	
 }
 Params.SquareStep = true;
-Params.DrawColour = true;
+Params.DrawColour = false;
 Params.DrawHeight = false;
 Params.DrawStepHeat = false;
 Params.DrawUv = false;
@@ -49,11 +48,12 @@ Params.TextureSampleColourAdd = 0.1;
 Params.BaseColour = [0.99,0.98,0.95];
 Params.BackgroundColour = [0,0,0];
 Params.BigImage = false;
-Params.TerrainHeightScalar = 0.74;
-Params.PositionToHeightmapScale = 0.009;
+Params.TerrainHeightScalar = 0.074;
 Params.Fov = 52;
 Params.BrightnessMult = 1.8;
-Params.HeightMapStepBack = 0.30;
+Params.HeightMapStepBack = 0.6;//0.30;
+Params.MoonSphere = [0,0,-2,1];
+Params.DebugClearEyes = false;
 
 const ParamsWindowRect = [800,20,350,200];
 var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRect);
@@ -71,7 +71,6 @@ ParamsWindow.AddParam('ApplyHeightColour');
 ParamsWindow.AddParam('BaseColour','Colour');
 ParamsWindow.AddParam('BackgroundColour','Colour');
 ParamsWindow.AddParam('BigImage');
-ParamsWindow.AddParam('PositionToHeightmapScale',0,1);
 ParamsWindow.AddParam('TerrainHeightScalar',0,5);
 ParamsWindow.AddParam('Fov',10,90);
 ParamsWindow.AddParam('BrightnessMult',0,10);
@@ -83,7 +82,8 @@ class TMoonApp
 	constructor()
 	{
 		this.Camera = new Pop.Camera();
-		this.Camera.Position[2] = this.Camera.LookAt[2] + 25;
+		this.Camera.LookAt = Params.MoonSphere.slice();
+		this.Camera.Position[2] = this.Camera.LookAt[2] + 4;
 		//this.Camera.LookAt = [71.5,-5,-30.3];
 		//this.Camera.Position = [69.8,3.35,-48.7];
 
@@ -156,8 +156,10 @@ let MoonColour16k = null;
 
 
 
-function Render(RenderTarget)
+function Render(RenderTarget,Camera)
 {
+	const RenderContext = RenderTarget.GetRenderContext();
+	
 	if ( !MoonHeightmap )
 	{
 		MoonHeightmap = new Pop.Image(HeightmapFilename);
@@ -184,15 +186,21 @@ function Render(RenderTarget)
 		MoonColour = MoonColour4k;
 	}
 
-	MoonApp.Camera.FovVertical = Params.Fov;
+	if ( !Params.DebugClearEyes )
+		RenderTarget.ClearColour( ...Params.BackgroundColour );
+	else if ( Camera.Name == 'left' )
+		RenderTarget.ClearColour( 0,0.5,1 );
+	else if (Camera.Name == 'right')
+		RenderTarget.ClearColour(1, 0, 0);
+	else if (Camera.Name == 'none')
+		RenderTarget.ClearColour(0, 1, 0);
+	else
+		RenderTarget.ClearColour( 1,0,1 );
 	
-	
-	RenderTarget.ClearColour( 0,1.0,0 );
-	const Quad = GetAsset('Quad',RenderTarget);
-	const Shader = GetAsset(RenderHeightmapShader,RenderTarget);
-	const Camera = MoonApp.Camera;
+	const Quad = GetAsset('Quad',RenderContext);
+	const Shader = GetAsset(RenderHeightmapShader,RenderContext);
 	const WorldToCameraMatrix = Camera.GetWorldToCameraMatrix();
-	const CameraProjectionMatrix = Camera.GetProjectionMatrix( RenderTarget.GetScreenRect() );
+	const CameraProjectionMatrix = Camera.GetProjectionMatrix( RenderTarget.GetRenderTargetRect() );
 	const ScreenToCameraTransform = Math.MatrixInverse4x4( CameraProjectionMatrix );
 	const CameraToWorldTransform = Math.MatrixInverse4x4( WorldToCameraMatrix );
 	const LocalToWorldTransform = Camera.GetLocalToWorldFrustumTransformMatrix();
@@ -216,7 +224,7 @@ function Render(RenderTarget)
 		}
 		Object.keys(Params).forEach(SetUniform);
 	}
-	//RenderTarget.EnableBlend(true);
+	RenderTarget.SetBlendModeAlpha();
 	RenderTarget.DrawGeometry( Quad, Shader, SetUniforms );
 
 }
@@ -229,7 +237,10 @@ Window.OnRender = function(RenderTarget)
 {
 	try
 	{
-		Render(RenderTarget);
+		//	update camera on render
+		MoonApp.Camera.LookAt = Params.MoonSphere.slice();
+		MoonApp.Camera.FovVertical = Params.Fov;
+		Render( RenderTarget, MoonApp.Camera );
 	}
 	catch(e)
 	{
@@ -270,4 +281,31 @@ Window.OnMouseScroll = function(x,y,Button,Delta)
 	Camera.OnCameraPanLocal( 0, 0, 0, true );
 	Camera.OnCameraPanLocal( 0, 0, Fly, false );
 }
+
+//	setup xr mode
+async function XrLoop(RenderContext)
+{
+	while(true)
+	{
+		const Device = await Pop.Xr.CreateDevice(RenderContext);
+		Device.OnRender = Render;
+		await Device.WaitForEnd();
+		Pop.Debug(`XR device ended`);
+	}
+}
+
+function InitXr()
+{
+	if ( !Pop.Xr.IsSupported() )
+		return;
+	
+	function StartXr()
+	{
+		XrLoop(Window).catch(Pop.Debug);
+	}
+	const Button = new Pop.Gui.Button('GotoXrButton');
+	Button.SetStyle('visibility','visible');
+	Button.OnClicked = StartXr;
+}
+InitXr();
 
