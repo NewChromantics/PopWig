@@ -25,6 +25,8 @@ uniform float TextureSampleColourMult;
 uniform float TextureSampleColourAdd;
 const bool FlipSample = true;
 
+#define MAX_STEPS	20
+
 const float4 MoonSphere = float4(0,0,0,10);
 
 struct TRay
@@ -106,7 +108,7 @@ float4 RayMarchHeightmap(vec3 ro,vec3 rd,out float resT,out float3 Intersection)
 {
 	const float mint = 0.501;
 	const float maxt = 40.0;
-	const int Steps = 20;
+	const int Steps = MAX_STEPS;
 	float lh = 0.0;
 	float ly = 0.0;
 	
@@ -293,7 +295,7 @@ float4 RayMarchSpherePos(TRay Ray,out float StepHeat)
 	const float CloseEnough = MinDistance;
 	const float MinStep = MinDistance;
 	const float MaxDistance = 100.0;
-	const int MaxSteps = 60;
+	const int MaxSteps = MAX_STEPS;
 	
 	float RayTime = 0.01;
 	
