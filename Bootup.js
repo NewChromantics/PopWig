@@ -12,12 +12,14 @@ function SetGlobal()
 }
 SetGlobal.call(this);
 
+const Earth = Pop.GetExeArguments().Earth;
 
 const RenderHeightmapShader = RegisterShaderAssetFilename('HeightMap.frag.glsl','Quad.vert.glsl');
 
-const Colour4kFilename = 'lroc_color_poles_4k.jpg';
-const Colour16kFilename = 'lroc_color_poles_16k.jpg';
-const HeightmapFilename = 'ldem_16_uint.jpg';
+const Colour4kFilename = Earth ? 'Earth_ColourMay_4096.jpg' : 'lroc_color_poles_4k.jpg';
+const Colour16kFilename = Earth ? 'Earth_ColourMay_4096.jpg' : 'lroc_color_poles_16k.jpg';
+//const HeightmapFilename = 'ldem_16_uint.jpg';
+const HeightmapFilename = Earth ? 'Earth_Heightmap_4096.png' : 'ldem_16_uint.jpg';
 Pop.AsyncCacheAssetAsString('HeightMap.frag.glsl');
 Pop.AsyncCacheAssetAsString('Quad.vert.glsl');
 Pop.AsyncCacheAssetAsImage(HeightmapFilename);
@@ -41,6 +43,7 @@ Params.ApplyHeightColour = false;
 Params.AmbientOcclusionMin = 0.21;
 Params.AmbientOcclusionMax = 0.66;
 Params.TextureSampleColourMult = 1.41;
+Params.TextureSampleColourAdd = 0.1;
 Params.BaseColour = [0.99,0.98,0.95];
 Params.BackgroundColour = [0,0,0];
 Params.BigImage = false;
@@ -57,6 +60,7 @@ ParamsWindow.AddParam('DrawColour');
 ParamsWindow.AddParam('DrawHeight');
 ParamsWindow.AddParam('DrawStepHeat');
 ParamsWindow.AddParam('TextureSampleColourMult',0,2);
+ParamsWindow.AddParam('TextureSampleColourAdd',-1,1);
 ParamsWindow.AddParam('ApplyAmbientOcclusionColour');
 ParamsWindow.AddParam('AmbientOcclusionMin',0,1);
 ParamsWindow.AddParam('AmbientOcclusionMax',0,1);
@@ -67,7 +71,7 @@ ParamsWindow.AddParam('BigImage');
 ParamsWindow.AddParam('PositionToHeightmapScale',0,1);
 ParamsWindow.AddParam('TerrainHeightScalar',0,5);
 ParamsWindow.AddParam('Fov',10,90);
-ParamsWindow.AddParam('BrightnessMult',0,3);
+ParamsWindow.AddParam('BrightnessMult',0,10);
 ParamsWindow.AddParam('HeightMapStepBack',0,1);
 
 

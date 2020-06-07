@@ -17,11 +17,13 @@ uniform bool ApplyAmbientOcclusionColour;
 uniform bool ApplyHeightColour;
 uniform float AmbientOcclusionMin;
 uniform float AmbientOcclusionMax;
-uniform float BrightnessMult;	//	mult on height colour
+uniform float BrightnessMult;
 uniform float HeightMapStepBack;
 uniform float3 BaseColour;
 uniform float3 BackgroundColour;
 uniform float TextureSampleColourMult;
+uniform float TextureSampleColourAdd;
+const bool FlipSample = true;
 
 const float4 MoonSphere = float4(0,0,0,10);
 
@@ -174,6 +176,9 @@ float2 ViewToEquirect(float3 View3)
 	
 	float2 uv = longlat / float2(2.0 * PI, PI);
 	
+	if ( FlipSample )
+		uv.y = 1.0 - uv.y;
+	
 	return uv;
 }
 
@@ -209,7 +214,7 @@ void GetMoonColourHeight(float3 MoonNormal,out float3 Colour,out float Height)
 {
 	GetMoonHeight( MoonNormal, Height );
 	float2 HeightmapUv = ViewToEquirect( MoonNormal );
-	
+
 	//	debug uv
 	//Colour = float3( HeightmapUv, 0.5 );
 	
@@ -219,18 +224,23 @@ void GetMoonColourHeight(float3 MoonNormal,out float3 Colour,out float Height)
 	{
 		Rgb = texture2D( ColourTexture, uv ).xyz;
 		Rgb *= TextureSampleColourMult;
+		Rgb += TextureSampleColourAdd;
 	}
 	else if ( DrawUv )
+	{
 		Rgb = float3( 1.0-uv.x, uv.y, 1.0 );
+	}
 	else if ( DrawHeight )
+	{
 		Rgb = NormalToRedGreen(Height);
+	}
 
 	Rgb *= BaseColour;
 	
 	if ( ApplyHeightColour )
 	{
 		float Brightness = Height * (1.0 / TerrainHeightScalar);
-		Rgb *= Brightness * BrightnessMult;
+		Rgb *= Brightness;
 	}
 	Colour = Rgb;
 }
