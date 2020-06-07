@@ -18,15 +18,19 @@ const EnableImages = Pop.GetExeArguments().EnableImages!==false;
 
 const RenderHeightmapShader = RegisterShaderAssetFilename('HeightMap.frag.glsl','Quad.vert.glsl');
 
-const Colour4kFilename = Earth ? 'Earth_ColourMay_4096.jpg' : 'lroc_color_poles_4k.jpg';
-const Colour16kFilename = Earth ? 'Earth_ColourMay_4096.jpg' : 'lroc_color_poles_16k.jpg';
+//const ColourFilename = 'Earth_ColourMay_4096.jpg';
+//const ColourFilename = 'lroc_color_poles_4k.jpg';
+//const ColourFilename = 'Moon_Colour_1024x512.jpg';
+const ColourFilename = 'Moon_Colour_2048x1024.jpg';
+
+//const HeightmapFilename = 'Earth_Heightmap_4096.png';
 //const HeightmapFilename = 'ldem_16_uint.jpg';
-const HeightmapFilename = Earth ? 'Earth_Heightmap_4096.png' : 'ldem_16_uint.jpg';
+//const HeightmapFilename = 'Moon_Depth_1024x512.jpg';
+const HeightmapFilename = 'Moon_Depth_2048x1024.jpg';
+
 Pop.AsyncCacheAssetAsString('HeightMap.frag.glsl');
 Pop.AsyncCacheAssetAsString('Quad.vert.glsl');
-Pop.AsyncCacheAssetAsImage(HeightmapFilename);
-Pop.AsyncCacheAssetAsImage(Colour4kFilename);
-//Pop.AsyncCacheAssetAsImage(Colour16kFilename);
+
 
 
 var Params = {};
@@ -70,7 +74,6 @@ ParamsWindow.AddParam('AmbientOcclusionMax',0,1);
 ParamsWindow.AddParam('ApplyHeightColour');
 ParamsWindow.AddParam('BaseColour','Colour');
 ParamsWindow.AddParam('BackgroundColour','Colour');
-ParamsWindow.AddParam('BigImage');
 ParamsWindow.AddParam('TerrainHeightScalar',0,5);
 ParamsWindow.AddParam('Fov',10,90);
 ParamsWindow.AddParam('BrightnessMult',0,10);
