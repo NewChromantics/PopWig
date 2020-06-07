@@ -35,7 +35,7 @@ function OnParamsChanged()
 	
 }
 Params.SquareStep = true;
-Params.DrawColour = false;
+Params.DrawColour = true;
 Params.DrawHeight = false;
 Params.DrawStepHeat = false;
 Params.DrawUv = false;
