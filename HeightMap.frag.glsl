@@ -23,7 +23,7 @@ uniform float3 BackgroundColour;
 uniform float TextureSampleColourMult;
 uniform float TextureSampleColourAdd;
 const bool FlipSample = true;
-
+uniform float StepHeatMax;
 #define MAX_STEPS	40
 #define FAR_Z		100.0
 
@@ -65,7 +65,7 @@ float Range(float Min,float Max,float Value)
 }
 float Range01(float Min,float Max,float Value)
 {
-	return clamp(0.0,1.0,Range(Min,Max,Value));
+	return clamp(Range(Min,Max,Value),0.0,1.0);
 }
 
 float3 NormalToRedGreen(float Normal)
@@ -274,6 +274,7 @@ void main()
 	
 	float StepHeat;
 	float4 SphereColour = RayMarchSphere( Ray, StepHeat );
+	StepHeat = min( 1.0, StepHeat / StepHeatMax );
 	if ( DrawStepHeat )
 		SphereColour.xyz = NormalToRedGreen( 1.0 - StepHeat );
 	

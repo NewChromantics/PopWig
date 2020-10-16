@@ -44,6 +44,7 @@ Params.DrawHeight = false;
 Params.DrawStepHeat = false;
 Params.DrawUv = false;
 Params.ApplyAmbientOcclusionColour = true;
+Params.StepHeatMax = 1.0;
 Params.ApplyHeightColour = false;
 Params.AmbientOcclusionMin = 0.21;
 Params.AmbientOcclusionMax = 0.66;
@@ -78,6 +79,7 @@ ParamsWindow.AddParam('TerrainHeightScalar',0,5);
 ParamsWindow.AddParam('Fov',10,90);
 ParamsWindow.AddParam('BrightnessMult',0,10);
 ParamsWindow.AddParam('HeightMapStepBack',0,1);
+ParamsWindow.AddParam('StepHeatMax',0,1);
 
 
 class TMoonApp
