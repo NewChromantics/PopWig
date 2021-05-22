@@ -253,11 +253,11 @@ MoveCamera = function(x,y,Button,FirstDown)
 	
 	//if ( Button == 0 )
 	//	this.Camera.OnCameraPan( x, 0, y, FirstDown );
-	if ( Button == 0 )
-		Camera.OnCameraOrbit( x, y, 0, FirstDown );
-	if ( Button == 2 )
+	if ( Button == 'Left' )
+		Camera.OnCameraOrbit( -x, y, 0, FirstDown );
+	if ( Button == 'Right' )
 		Camera.OnCameraPanLocal( x, y, 0, FirstDown );
-	if ( Button == 1 )
+	if ( Button == 'Middle' )
 		Camera.OnCameraPanLocal( x, 0, y, FirstDown );
 }
 
@@ -290,7 +290,7 @@ function XrToMouseFunc(xyz,Button,Controller)
 }
 
 //	setup xr mode
-async function XrLoop(RenderContext)
+async function XrThread(RenderContext)
 {
 	while(true)
 	{
@@ -316,12 +316,4 @@ async function XrLoop(RenderContext)
 	}
 }
 
-function InitXr()
-{
-	if ( !Pop.Xr.IsSupported() )
-		return;
-	
-	XrLoop(Window).catch(Pop.Debug);
-}
-InitXr();
-
+XrThread(Window).catch(Pop.Debug);
