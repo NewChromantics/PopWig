@@ -56,7 +56,7 @@ Params.TerrainHeightScalar = 0.074;
 Params.Fov = 52;
 Params.BrightnessMult = 1.8;
 Params.HeightMapStepBack = 0.57;//0.30;
-Params.MoonSphere = [0,0,-2,1];
+Params.MoonSphere = [0,1.6,0.2,0.5];
 Params.DebugClearEyes = false;
 Params.XrToMouseScale = 100;	//	metres to pixels
 
@@ -88,7 +88,14 @@ class TMoonApp
 	{
 		this.Camera = new Pop.Camera();
 		this.Camera.LookAt = Params.MoonSphere.slice();
-		this.Camera.Position[2] = this.Camera.LookAt[2] + 4;
+		
+		this.Camera.Position = [0,1.6, Params.MoonSphere[2]+Params.MoonSphere[3]*3 ];
+		
+		//	holoplayer webxr position
+		//this.Camera.LookAt = [0,0,0];
+		//this.Camera.Position = [0,1.6,8.276];
+		
+		//this.Camera.Position[2] = this.Camera.LookAt[2] + 4;
 		//this.Camera.LookAt = [71.5,-5,-30.3];
 		//this.Camera.Position = [69.8,3.35,-48.7];
 
@@ -178,22 +185,31 @@ LoadAssets();
 function Render(RenderTarget,Camera)
 {
 	const RenderContext = RenderTarget.GetRenderContext();
-	
+
+	/*
 	if ( !Params.DebugClearEyes )
+	{
 		RenderTarget.ClearColour( ...Params.BackgroundColour );
-	else if ( Camera.Name == 'left' )
-		RenderTarget.ClearColour( 0,0.5,1 );
-	else if (Camera.Name == 'right')
-		RenderTarget.ClearColour(1, 0, 0);
-	else if (Camera.Name == 'none')
-		RenderTarget.ClearColour(0, 1, 0);
-	else
-		RenderTarget.ClearColour( 1,0,1 );
-	
+	}
+	else if ( Camera.ClearAlpha !== 0 )
+	{
+		if ( Camera.Name == 'left' )
+			RenderTarget.ClearColour( 0,0.5,1 );
+		else if (Camera.Name == 'right')
+			RenderTarget.ClearColour(1, 0, 0);
+		else if (Camera.Name == 'none')
+			RenderTarget.ClearColour(0, 1, 0);
+		else
+			RenderTarget.ClearColour( 1,0,1 );
+	}
+	*/
+	let ProjectionViewport = RenderTarget.GetRenderTargetRect();
+	ProjectionViewport[0] = 0;
+	ProjectionViewport[1] = 0; 
 	const Quad = GetAsset('Quad',RenderContext);
 	const Shader = GetAsset(RenderHeightmapShader,RenderContext);
 	const WorldToCameraMatrix = Camera.GetWorldToCameraMatrix();
-	const CameraProjectionMatrix = Camera.GetProjectionMatrix( RenderTarget.GetRenderTargetRect() );
+	const CameraProjectionMatrix = Camera.GetProjectionMatrix( ProjectionViewport );
 	const ScreenToCameraTransform = Math.MatrixInverse4x4( CameraProjectionMatrix );
 	const CameraToWorldTransform = Math.MatrixInverse4x4( WorldToCameraMatrix );
 	const LocalToWorldTransform = Camera.GetLocalToWorldFrustumTransformMatrix();
@@ -209,7 +225,7 @@ function Render(RenderTarget,Camera)
 	
 	const SetUniforms = function(Shader)
 	{
-		Shader.SetUniform('VertexRect',[0,0,1,1.0]);
+		Shader.SetUniform('VertexRect',[0,0,1,1]);
 		Shader.SetUniform('ScreenToCameraTransform',ScreenToCameraTransform);
 		Shader.SetUniform('CameraToWorldTransform',CameraToWorldTransform);
 		Shader.SetUniform('LocalToWorldTransform',LocalToWorldTransform);
@@ -227,7 +243,19 @@ function Render(RenderTarget,Camera)
 	RenderTarget.DrawGeometry( Quad, Shader, SetUniforms );
 
 }
-
+/*
+  negateWindowZoomAndOffset() {
+    const windowZoom =
+        window.outerWidth / document.body.getBoundingClientRect().width;
+    const browserToolbarHeight = window.outerHeight - window.innerHeight;
+    this.domElement.style.width = `${this.domElement.width / windowZoom}px`;
+    this.domElement.style.height = `${this.domElement.height / windowZoom}px`;
+    this.domElement.style.left =
+        `${(window.screen.availLeft - window.screenLeft) / windowZoom}px`;
+    this.domElement.style.top =
+        `${- (window.screenTop + browserToolbarHeight) / windowZoom}px`;
+  }
+*/
 
 //	window now shared from bootup
 const Window = new Pop.Opengl.Window("Lunar");

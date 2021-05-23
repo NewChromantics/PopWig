@@ -24,8 +24,10 @@ uniform float TextureSampleColourMult;
 uniform float TextureSampleColourAdd;
 const bool FlipSample = true;
 uniform float StepHeatMax;
-#define MAX_STEPS	40
-#define FAR_Z		100.0
+#define MAX_STEPS	30
+#define FAR_Z		10.0
+//	bodge as AO colour was tweaked with 40 steps
+#define STEPHEAT_MAX	( StepHeatMax / (float(MAX_STEPS)/40.0) )
 
 uniform float4 MoonSphere;// = float4(0,0,-3,1.0);
 
@@ -57,6 +59,15 @@ void GetWorldRay(out float3 RayPos,out float3 RayDir)
 	
 	//	gr: this is backwards!
 	RayDir = -normalize( RayDir );
+	
+	//	mega bodge for webxr views
+	//	but, there's something wrong with when we pan (may be using old broken camera code)
+	/*
+	if ( RayDir.z < 0.0 )
+	{
+		RayDir *= -1.0;
+	}
+	*/
 }
 
 float Range(float Min,float Max,float Value)
@@ -268,13 +279,18 @@ float4 RayMarchSphere(TRay Ray,out float StepHeat)
 
 void main()
 {
+	//gl_FragColor = vec4(uv,0,1);
+	//return;
 	TRay Ray;
 	GetWorldRay(Ray.Pos,Ray.Dir);
 	float4 Colour = float4(BackgroundColour,0.0);
 	
+	//gl_FragColor = vec4(Ray.Dir,1.0);
+	//return;
+	
 	float StepHeat;
 	float4 SphereColour = RayMarchSphere( Ray, StepHeat );
-	StepHeat = min( 1.0, StepHeat / StepHeatMax );
+	StepHeat = min( 1.0, StepHeat / STEPHEAT_MAX );
 	if ( DrawStepHeat )
 		SphereColour.xyz = NormalToRedGreen( 1.0 - StepHeat );
 	
@@ -286,6 +302,8 @@ void main()
 
 
 	Colour = mix( Colour, SphereColour, max(0.0,SphereColour.w) );
+	//Colour.xy = uv;
+	Colour.w = 1.0;
 	gl_FragColor = Colour;
 }
 
