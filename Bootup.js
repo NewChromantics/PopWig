@@ -384,8 +384,41 @@ async function ScreenRenderLoop()
 	}
 }
 
+let ParamsWindow;
+function InitParamsWindow()
+{
+	ParamsWindow = new Pop.Gui.Tree(null,'Params');
+	
+	function OnParamsChanged(NewParams)
+	{
+		Object.assign( Params, NewParams );
+	}
+	
+	const Meta = {};
+	for ( let Param in Params )
+		Meta[Param] = {Writable:true};
+
+	//	todo: this needs to be in gui code
+	ParamsWindow.Element.meta = Meta;
+	ParamsWindow.Element.onchange = OnParamsChanged
+	
+	
+
+	ParamsWindow.SetValue(Params);
+}
+	
+
 export default async function Boot()
 {
+	try
+	{
+		InitParamsWindow();
+	}
+	catch(e)
+	{
+		console.error(e);
+	}
+	
 	//	bootup 2d screen
 	const ScreenThread = ScreenRenderLoop();
 	

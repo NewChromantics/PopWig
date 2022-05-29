@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+	<script src="./WebComponent_TreeView/TreeView.js" type=module></script>
 	<link rel="stylesheet" type="text/css" href="Editor_win95.css" />
 <style>
 	/* disable scrolling on ios
@@ -44,9 +45,25 @@ canvas
 	flex-grow:	1;
 }
 
+#Params
+{
+	position:	absolute;
+	z-index:	10;
+	border-radius:	0.2em;
+	right:		1em;
+	bottom:		1em;
+	width:		20em;
+	height:		10em;
+	background:	#eee;
+	border:		solid 1px #000;
+	opacity:	50%;
+	overflow:	auto;
+}
+
 </style>
 </head>
 <body>
+<tree-view id=Params css="WebComponent_TreeView/TreeView.css"></tree-view>
 	<div id=GotoXrButton>View in XR</div>
 
 <canvas id=RenderCanvas></canvas>
