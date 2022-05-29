@@ -1,22 +1,18 @@
-Pop.Include = function(Filename)
-{
-	let Source = Pop.LoadFileAsString(Filename);
-	return Pop.CompileAndRun( Source, Filename );
-}
+import Params from './Params.js'
+import Camera_t from './PopEngineCommon/Camera.js'
+import Pop from './PopEngineCommon/PopEngine.js'
+import {CreateBlitQuadGeometry} from './PopEngineCommon/CommonGeometry.js'
+import {MatrixInverse4x4} from './PopEngineCommon/Math.js'
+import {LoadFileAsImageAsync,LoadFileAsStringAsync} from './PopEngineCommon/FileSystem.js'
 
-//	auto setup global
-function SetGlobal()
-{
-	Pop.Global = this;
-	Pop.Debug(Pop.Global);
-}
-SetGlobal.call(this);
 
 const Earth = Pop.GetExeArguments().Earth;
 const EnableImages = Pop.GetExeArguments().EnableImages!==false;
 //const EnableImages = false;
 
-const RenderHeightmapShader = RegisterShaderAssetFilename('HeightMap.frag.glsl','Quad.vert.glsl');
+const HeightmapShaderVert = 'Quad.vert.glsl';
+const HeightmapShaderFrag = 'HeightMap.frag.glsl';
+const HeightmapShaderMacros = {};
 
 //const ColourFilename = 'Earth_ColourMay_4096.jpg';
 //const ColourFilename = 'lroc_color_poles_4k.jpg';
@@ -28,79 +24,7 @@ const ColourFilename = 'Moon_Colour_2048x1024.jpg';
 //const HeightmapFilename = 'Moon_Depth_1024x512.jpg';
 const HeightmapFilename = 'Moon_Depth_2048x1024.jpg';
 
-Pop.AsyncCacheAssetAsString('HeightMap.frag.glsl');
-Pop.AsyncCacheAssetAsString('Quad.vert.glsl');
 
-
-
-var Params = {};
-function OnParamsChanged()
-{
-	
-}
-Params.SquareStep = true;
-Params.DrawColour = true;
-Params.DrawHeight = false;
-Params.DrawStepHeat = false;
-Params.DrawUv = false;
-Params.ApplyAmbientOcclusionColour = true;
-Params.StepHeatMax = 1.0;
-Params.ApplyHeightColour = false;
-Params.AmbientOcclusionMin = 0.31;
-Params.AmbientOcclusionMax = 0.78;
-Params.TextureSampleColourMult = 1.41;
-Params.TextureSampleColourAdd = 0.1;
-Params.BaseColour = [0.91,0.85,0.75];
-Params.BackgroundColour = [0,0,0];
-Params.TerrainHeightScalar = 0.074;
-Params.Fov = 52;
-Params.BrightnessMult = 1.8;
-Params.HeightMapStepBack = 0.57;//0.30;
-Params.MoonSphere = [0,1.6,0.2,0.5];
-Params.DebugClearEyes = false;
-Params.XrToMouseScale = 100;	//	metres to pixels
-
-const ParamsWindowRect = [800,20,350,200];
-var ParamsWindow = new CreateParamsWindow(Params,OnParamsChanged,ParamsWindowRect);
-ParamsWindow.AddParam('SquareStep');
-ParamsWindow.AddParam('DrawColour');
-ParamsWindow.AddParam('DrawHeight');
-ParamsWindow.AddParam('DrawStepHeat');
-ParamsWindow.AddParam('DrawUv');
-ParamsWindow.AddParam('TextureSampleColourMult',0,2);
-ParamsWindow.AddParam('TextureSampleColourAdd',-1,1);
-ParamsWindow.AddParam('ApplyAmbientOcclusionColour');
-ParamsWindow.AddParam('AmbientOcclusionMin',0,1);
-ParamsWindow.AddParam('AmbientOcclusionMax',0,1);
-ParamsWindow.AddParam('ApplyHeightColour');
-ParamsWindow.AddParam('BaseColour','Colour');
-ParamsWindow.AddParam('BackgroundColour','Colour');
-ParamsWindow.AddParam('TerrainHeightScalar',0,5);
-ParamsWindow.AddParam('Fov',10,90);
-ParamsWindow.AddParam('BrightnessMult',0,10);
-ParamsWindow.AddParam('HeightMapStepBack',0,1);
-ParamsWindow.AddParam('StepHeatMax',0,1);
-
-
-class TMoonApp
-{
-	constructor()
-	{
-		this.Camera = new Pop.Camera();
-		this.Camera.LookAt = Params.MoonSphere.slice();
-		
-		this.Camera.Position = [0,1.6, Params.MoonSphere[2]+Params.MoonSphere[3]*3 ];
-		
-		//	holoplayer webxr position
-		//this.Camera.LookAt = [0,0,0];
-		//this.Camera.Position = [0,1.6,8.276];
-		
-		//this.Camera.Position[2] = this.Camera.LookAt[2] + 4;
-		//this.Camera.LookAt = [71.5,-5,-30.3];
-		//this.Camera.Position = [69.8,3.35,-48.7];
-
-	}
-}
 
 
 const RandomNumberCache = [];
@@ -158,10 +82,7 @@ Pop.CreateColourTexture = function(Colour4)
 	return NewTexture;
 }
 
-
-const MoonApp = new TMoonApp();
-
-
+/*
 let MoonColourTexture = Pop.CreateColourTexture([0.1,0.8,0.8,1]);
 let MoonDepthTexture = Pop.CreateColourTexture([0,0,0,1]);
 
@@ -180,69 +101,8 @@ async function LoadAssets()
 LoadAssets();
 
 
-	
-	
-function Render(RenderTarget,Camera)
-{
-	const RenderContext = RenderTarget.GetRenderContext();
-
-	/*
-	if ( !Params.DebugClearEyes )
-	{
-		RenderTarget.ClearColour( ...Params.BackgroundColour );
-	}
-	else if ( Camera.ClearAlpha !== 0 )
-	{
-		if ( Camera.Name == 'left' )
-			RenderTarget.ClearColour( 0,0.5,1 );
-		else if (Camera.Name == 'right')
-			RenderTarget.ClearColour(1, 0, 0);
-		else if (Camera.Name == 'none')
-			RenderTarget.ClearColour(0, 1, 0);
-		else
-			RenderTarget.ClearColour( 1,0,1 );
-	}
 	*/
-	let ProjectionViewport = RenderTarget.GetRenderTargetRect();
-	ProjectionViewport[0] = 0;
-	ProjectionViewport[1] = 0; 
-	const Quad = GetAsset('Quad',RenderContext);
-	const Shader = GetAsset(RenderHeightmapShader,RenderContext);
-	const WorldToCameraMatrix = Camera.GetWorldToCameraMatrix();
-	const CameraProjectionMatrix = Camera.GetProjectionMatrix( ProjectionViewport );
-	const ScreenToCameraTransform = Math.MatrixInverse4x4( CameraProjectionMatrix );
-	const CameraToWorldTransform = Math.MatrixInverse4x4( WorldToCameraMatrix );
-	const LocalToWorldTransform = Camera.GetLocalToWorldFrustumTransformMatrix();
-	//const LocalToWorldTransform = Math.CreateIdentityMatrix();
-	const WorldToLocalTransform = Math.MatrixInverse4x4(LocalToWorldTransform);
-	//Pop.Debug("Camera frustum LocalToWorldTransform",LocalToWorldTransform);
-	//Pop.Debug("Camera frustum WorldToLocalTransform",WorldToLocalTransform);
-	
-	//	these should be GetAsset
-	const Colour = MoonColourTexture;
-	const Heightmap = MoonDepthTexture;
-	
-	
-	const SetUniforms = function(Shader)
-	{
-		Shader.SetUniform('VertexRect',[0,0,1,1]);
-		Shader.SetUniform('ScreenToCameraTransform',ScreenToCameraTransform);
-		Shader.SetUniform('CameraToWorldTransform',CameraToWorldTransform);
-		Shader.SetUniform('LocalToWorldTransform',LocalToWorldTransform);
-		Shader.SetUniform('WorldToLocalTransform',WorldToLocalTransform);
-		Shader.SetUniform('HeightmapTexture',Heightmap);
-		Shader.SetUniform('ColourTexture',Colour);
-		
-		function SetUniform(Key)
-		{
-			Shader.SetUniform( Key, Params[Key] );
-		}
-		Object.keys(Params).forEach(SetUniform);
-	}
-	RenderTarget.SetBlendModeAlpha();
-	RenderTarget.DrawGeometry( Quad, Shader, SetUniforms );
 
-}
 /*
   negateWindowZoomAndOffset() {
     const windowZoom =
@@ -257,9 +117,7 @@ function Render(RenderTarget,Camera)
   }
 */
 
-//	window now shared from bootup
-const Window = new Pop.Opengl.Window("Lunar");
-
+/*
 Window.OnRender = function(RenderTarget)
 {
 	try
@@ -345,3 +203,194 @@ async function XrThread(RenderContext)
 }
 
 XrThread(Window).catch(Pop.Debug);
+*/
+
+
+	
+function Render(RenderTarget,Camera)
+{
+	const RenderContext = RenderTarget.GetRenderContext();
+
+	/*
+	if ( !Params.DebugClearEyes )
+	{
+		RenderTarget.ClearColour( ...Params.BackgroundColour );
+	}
+	else if ( Camera.ClearAlpha !== 0 )
+	{
+		if ( Camera.Name == 'left' )
+			RenderTarget.ClearColour( 0,0.5,1 );
+		else if (Camera.Name == 'right')
+			RenderTarget.ClearColour(1, 0, 0);
+		else if (Camera.Name == 'none')
+			RenderTarget.ClearColour(0, 1, 0);
+		else
+			RenderTarget.ClearColour( 1,0,1 );
+	}
+	*/
+	let ProjectionViewport = RenderTarget.GetRenderTargetRect();
+	ProjectionViewport[0] = 0;
+	ProjectionViewport[1] = 0; 
+	const Quad = GetAsset('Quad',RenderContext);
+	const Shader = GetAsset(RenderHeightmapShader,RenderContext);
+	const WorldToCameraMatrix = Camera.GetWorldToCameraMatrix();
+	const CameraProjectionMatrix = Camera.GetProjectionMatrix( ProjectionViewport );
+	const ScreenToCameraTransform = Math.MatrixInverse4x4( CameraProjectionMatrix );
+	const CameraToWorldTransform = Math.MatrixInverse4x4( WorldToCameraMatrix );
+	const LocalToWorldTransform = Camera.GetLocalToWorldFrustumTransformMatrix();
+	//const LocalToWorldTransform = Math.CreateIdentityMatrix();
+	const WorldToLocalTransform = Math.MatrixInverse4x4(LocalToWorldTransform);
+	//Pop.Debug("Camera frustum LocalToWorldTransform",LocalToWorldTransform);
+	//Pop.Debug("Camera frustum WorldToLocalTransform",WorldToLocalTransform);
+	
+	//	these should be GetAsset
+	const Colour = MoonColourTexture;
+	const Heightmap = MoonDepthTexture;
+	
+	
+	const SetUniforms = function(Shader)
+	{
+		Shader.SetUniform('VertexRect',[0,0,1,1]);
+		Shader.SetUniform('ScreenToCameraTransform',ScreenToCameraTransform);
+		Shader.SetUniform('CameraToWorldTransform',CameraToWorldTransform);
+		Shader.SetUniform('LocalToWorldTransform',LocalToWorldTransform);
+		Shader.SetUniform('WorldToLocalTransform',WorldToLocalTransform);
+		Shader.SetUniform('HeightmapTexture',Heightmap);
+		Shader.SetUniform('ColourTexture',Colour);
+		
+		function SetUniform(Key)
+		{
+			Shader.SetUniform( Key, Params[Key] );
+		}
+		Object.keys(Params).forEach(SetUniform);
+	}
+	RenderTarget.SetBlendModeAlpha();
+	RenderTarget.DrawGeometry( Quad, Shader, SetUniforms );
+
+}
+
+
+let QuadGeometry;
+let RaymarchShader;
+let MoonColourTexture;
+let MoonDepthTexture;
+//let MoonColourTexture = Pop.CreateColourTexture([0.1,0.8,0.8,1]);
+//let MoonDepthTexture = Pop.CreateColourTexture([0,0,0,1]);
+/*
+async function LoadAssets()
+{
+	//	start loads together
+	const DepthPromise = Pop.LoadFileAsImageAsync(HeightmapFilename);
+	const ColourPromise = Pop.LoadFileAsImageAsync(ColourFilename);
+
+	//	set new textures
+	MoonDepthTexture = await DepthPromise;
+	MoonDepthTexture.SetLinearFilter(true);
+	MoonColourTexture = await ColourPromise;
+	MoonColourTexture.SetLinearFilter(true);
+}
+LoadAssets();
+*/
+
+
+async function LoadAssets(RenderContext)
+{
+	if ( !QuadGeometry )
+	{
+		const BlitQuad = CreateBlitQuadGeometry();
+		QuadGeometry = await RenderContext.CreateGeometry( BlitQuad );
+	}
+	
+	if ( !RaymarchShader )
+	{
+		const VertSource = await LoadFileAsStringAsync( HeightmapShaderVert );
+		const FragSource = await LoadFileAsStringAsync( HeightmapShaderFrag );
+		RaymarchShader = await RenderContext.CreateShader( VertSource, FragSource, HeightmapShaderMacros );
+	}
+	
+	if ( !MoonColourTexture )
+	{
+		MoonColourTexture = await LoadFileAsImageAsync(ColourFilename);
+	}
+	
+	if ( !MoonDepthTexture )
+	{
+		MoonDepthTexture = await LoadFileAsImageAsync(HeightmapFilename);
+	}
+}
+
+function GetRenderCommands(Camera,ScreenRect)
+{
+	const Commands = [];
+	
+	const Clear = ['SetRenderTarget',null,[1,0,0]];
+	Commands.push(Clear);
+	
+	
+	let ProjectionViewport = ScreenRect;
+	//ProjectionViewport[0] = 0;
+	//ProjectionViewport[1] = 0; 
+
+	const Quad = QuadGeometry;
+	const Shader = RaymarchShader;
+	const WorldToCameraMatrix = Camera.GetWorldToCameraMatrix();
+	const CameraProjectionMatrix = Camera.GetProjectionMatrix( ProjectionViewport );
+	const ScreenToCameraTransform = MatrixInverse4x4( CameraProjectionMatrix );
+	const CameraToWorldTransform = MatrixInverse4x4( WorldToCameraMatrix );
+	const LocalToWorldTransform = Camera.GetLocalToWorldFrustumTransformMatrix();
+	//const LocalToWorldTransform = Math.CreateIdentityMatrix();
+	const WorldToLocalTransform = MatrixInverse4x4(LocalToWorldTransform);
+	//Pop.Debug("Camera frustum LocalToWorldTransform",LocalToWorldTransform);
+	//Pop.Debug("Camera frustum WorldToLocalTransform",WorldToLocalTransform);
+	
+	//	these should be GetAsset
+	const Colour = MoonColourTexture;
+	const Heightmap = MoonDepthTexture;
+	
+	const Uniforms = {}
+	Object.assign( Uniforms, Params );
+	Uniforms.VertexRect = [0,0,1,1];
+	Uniforms.ScreenToCameraTransform = ScreenToCameraTransform;
+	Uniforms.CameraToWorldTransform = CameraToWorldTransform;
+	Uniforms.LocalToWorldTransform = LocalToWorldTransform;
+	Uniforms.WorldToLocalTransform = WorldToLocalTransform;
+	Uniforms.HeightmapTexture = Heightmap;
+	Uniforms.ColourTexture = Colour;
+
+	const Draw = ['Draw',Quad,Shader,Uniforms];
+	Commands.push(Draw);
+
+	return Commands;
+}
+
+
+async function ScreenRenderLoop()
+{
+	//	create window etc here
+	let RenderView = new Pop.Gui.RenderView(null,'RenderCanvas');
+	let RenderContext = new Pop.Opengl.Context(RenderView);
+	let Camera = new Camera_t();
+	Camera.LookAt = Params.MoonSphere.slice();
+	Camera.Position = [0,1.6, Params.MoonSphere[2]+Params.MoonSphere[3]*3 ];
+
+	while ( RenderContext )
+	{
+		await LoadAssets(RenderContext);
+		
+		const ScreenRect = RenderView.GetScreenRect();
+		const RenderCommands = GetRenderCommands( Camera, ScreenRect );
+		
+		await RenderContext.Render( RenderCommands );
+	}
+}
+
+export default async function Boot()
+{
+	//	bootup 2d screen
+	const ScreenThread = ScreenRenderLoop();
+	
+	//	bootup XR
+	
+	//	wait for app to quit
+	await ScreenThread;
+}

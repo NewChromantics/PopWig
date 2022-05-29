@@ -8,12 +8,14 @@
 	 */
 html, body
 {
-	position:	fixed;
-	width:		100vw;
 	height:		100vh;
 	margin:		0px;
 	padding:	0px;
+	background:	#333;
+}
 
+body
+{
 	display:	flex;
 }
 
@@ -37,6 +39,8 @@ html, body
 
 canvas
 {
+	width:	100%;
+	height:	100%;
 	flex-grow:	1;
 }
 
@@ -44,25 +48,17 @@ canvas
 </head>
 <body>
 	<div id=GotoXrButton>View in XR</div>
-<script>
-	
+
+<canvas id=RenderCanvas></canvas>
+
+<script type=module>
+
+import Boot from './Bootup.js'
+
+Boot();
+
 </script>
 
-	<script src='PopEngineCommon/PopWebApi.js'></script>
-	<script src='PopEngineCommon/PopApi.js'></script>
-	<script src='PopEngineCommon/PopWebOpenglApi.js'></script>
-	<script src='PopEngineCommon/PopWebGuiApi.js'></script>
-	<script src='PopEngineCommon/PopWebImageApi.js'></script>
-	<script src='PopEngineCommon/PopWebSocketApi.js'></script>
-	<script src='PopEngineCommon/PopWebXrApi.js'></script>
-
-	<!-- engine normally loads these in-code -->
-	<script src='PopEngineCommon/PopMath.js'></script>
-	<script src='PopEngineCommon/PopCamera.js'></script>
-	<script src='PopEngineCommon/PopShaderCache.js'></script>
-	<script src='PopEngineCommon/ParamsWindow.js'></script>
-	<script src='AssetManager.js'></script>
-	<script src='Bootup.js'></script>
 	
 </body>
 

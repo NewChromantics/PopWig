@@ -1,6 +1,6 @@
 uniform vec4 VertexRect;// = vec4(0,0,1,1);
-in vec2 TexCoord;
-out vec2 uv;
+attribute vec2 TexCoord;
+varying vec2 uv;
 
 
 void main()
