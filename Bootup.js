@@ -133,40 +133,6 @@ Window.OnRender = function(RenderTarget)
 	}
 }
 
-MoveCamera = function(x,y,Button,FirstDown)
-{
-	const Camera = MoonApp.Camera;
-	
-	//if ( Button == 0 )
-	//	this.Camera.OnCameraPan( x, 0, y, FirstDown );
-	if ( Button == 'Left' )
-		Camera.OnCameraOrbit( -x, y, 0, FirstDown );
-	if ( Button == 'Right' )
-		Camera.OnCameraPanLocal( x, y, 0, FirstDown );
-	if ( Button == 'Middle' )
-		Camera.OnCameraPanLocal( x, 0, y, FirstDown );
-}
-
-Window.OnMouseDown = function(x,y,Button)
-{
-	MoveCamera( x,y,Button,true );
-}
-
-Window.OnMouseMove = function(x,y,Button)
-{
-	MoveCamera( x,y,Button,false );
-}
-
-Window.OnMouseScroll = function(x,y,Button,Delta)
-{
-	let Fly = Delta[1] * 50;
-	//Fly *= Params.ScrollFlySpeed;
-
-	const Camera = MoonApp.Camera;
-	Camera.OnCameraPanLocal( 0, 0, 0, true );
-	Camera.OnCameraPanLocal( 0, 0, Fly, false );
-}
-
 function XrToMouseFunc(xyz,Button,Controller)
 {
 	const MouseFunc = this;
@@ -311,11 +277,13 @@ async function LoadAssets(RenderContext)
 	if ( !MoonColourTexture )
 	{
 		MoonColourTexture = await LoadFileAsImageAsync(ColourFilename);
+		MoonColourTexture.SetLinearFilter(true);
 	}
 	
 	if ( !MoonDepthTexture )
 	{
 		MoonDepthTexture = await LoadFileAsImageAsync(HeightmapFilename);
+		MoonDepthTexture.SetLinearFilter(true);
 	}
 }
 
@@ -364,6 +332,40 @@ function GetRenderCommands(Camera,ScreenRect)
 }
 
 
+function InitCameraControls(Gui,Camera)
+{
+	function MoveCamera(x,y,Button,FirstDown)
+	{
+		//if ( Button == 0 )
+		//	this.Camera.OnCameraPan( x, 0, y, FirstDown );
+		if ( Button == 'Left' )
+			Camera.OnCameraPanLocal( -x, y, 0, FirstDown );
+		if ( Button == 'Right' )
+			Camera.OnCameraPanLocal( x, y, 0, FirstDown );
+		if ( Button == 'Middle' )
+			Camera.OnCameraPanLocal( x, 0, y, FirstDown );
+	}
+
+	Gui.OnMouseDown = function(x,y,Button)
+	{
+		MoveCamera( x,y,Button,true );
+	}
+
+	Gui.OnMouseMove = function(x,y,Button)
+	{
+		MoveCamera( x,y,Button,false );
+	}
+
+	Gui.OnMouseScroll = function(x,y,Button,Delta)
+	{
+		let Fly = Delta[1] * 50;
+		//Fly *= Params.ScrollFlySpeed;
+
+		Camera.OnCameraPanLocal( 0, 0, 0, true );
+		Camera.OnCameraPanLocal( 0, 0, Fly, false );
+	}
+}
+
 async function ScreenRenderLoop()
 {
 	//	create window etc here
@@ -372,6 +374,8 @@ async function ScreenRenderLoop()
 	let Camera = new Camera_t();
 	Camera.LookAt = Params.MoonSphere.slice();
 	Camera.Position = [0,1.6, Params.MoonSphere[2]+Params.MoonSphere[3]*3 ];
+
+	InitCameraControls(RenderView,Camera);
 
 	while ( RenderContext )
 	{
