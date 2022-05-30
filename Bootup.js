@@ -1,4 +1,4 @@
-import Params from './Params.js'
+import {Params,ParamsMeta} from './Params.js'
 import Camera_t from './PopEngineCommon/Camera.js'
 import Pop from './PopEngineCommon/PopEngine.js'
 import {CreateBlitQuadGeometry} from './PopEngineCommon/CommonGeometry.js'
@@ -394,9 +394,12 @@ function InitParamsWindow()
 		Object.assign( Params, NewParams );
 	}
 	
-	const Meta = {};
+	const Meta = ParamsMeta;
 	for ( let Param in Params )
-		Meta[Param] = {Writable:true};
+	{
+		Meta[Param] = Meta[Param]||{};
+		Meta[Param].Writable = true;
+	}
 
 	//	todo: this needs to be in gui code
 	ParamsWindow.Element.meta = Meta;
