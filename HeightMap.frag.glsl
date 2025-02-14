@@ -296,14 +296,7 @@ vec4 RayMarchScene(TRay Ray)
 	
 	
 	float RayTraversed = 0.0;	//	world space distance
-	/*
-	//	start close
-	float RayTime = DistanceToScene( Ray.Pos, Ray.Dir );//0.01;
-	if ( RayTime >= FAR_Z )
-	{
-		return vec4( RayTime, RayTime, RayTime, 0.0 );
-	}
-	*/
+	
 	for ( int s=0;	s<MaxSteps;	s++ )
 	{
 		vec3 Position = Ray.Pos + Ray.Dir * RayTraversed;
@@ -335,10 +328,11 @@ float RayMarchSceneOcclusion(TRay Ray)
 	const float MinDistance = 0.01;
 	const float CloseEnough = MinDistance;
 	const float MinStep = MinDistance;
-	const float MaxDistance = FAR_Z_EPSILON;
+	//const float MaxDistance = FAR_Z_EPSILON;
 	const int MaxSteps = MAX_STEPS;
 	
-	
+	float MaxDistance = length(Ray.Dir);
+	Ray.Dir = normalize(Ray.Dir);
 	
 	float RayTraversed = 0.0;	//	world space distance
 	for ( int s=0;	s<MaxSteps;	s++ )
@@ -489,10 +483,10 @@ void main()
 		{
 			TRay OcclusionRay;
 			OcclusionRay.Pos = HitPos+Normal*StepAwayFromSurface;
-			OcclusionRay.Dir = normalize(WorldLightPosition-HitPos);
+			OcclusionRay.Dir = WorldLightPosition - HitPos;
 			float Occlusion = RayMarchSceneOcclusion( OcclusionRay );
 			Colour.xyz = mix( Colour.xyz, vec3(ShadowMult), Occlusion );
-			//Colour.xyz = OcclusionRay.Dir;
+			//Colour.xyz = normalize(OcclusionRay.Dir);
 		}
 	}
 	
