@@ -24,18 +24,48 @@ uniform float TextureSampleColourMult;
 uniform float TextureSampleColourAdd;
 const bool FlipSample = true;
 uniform float StepHeatMax;
-#define MAX_STEPS	40
-#define FAR_Z		100.0
+uniform float Shadowk;	//	=1.70
+uniform float BounceSurfaceDistance;
+
+uniform float LightX;
+uniform float LightY;
+uniform float LightZ;
+uniform float LightRadius;
+#define WorldLightPosition	vec3(LightX,LightY,LightZ)
+#define LightSphere	vec4(LightX,LightY,LightZ,LightRadius)
+
+#define MAX_STEPS	70
+#define FAR_Z		200.0
+#define FAR_Z_EPSILON	(FAR_Z-0.01)
 //	bodge as AO colour was tweaked with 40 steps
 #define STEPHEAT_MAX	( StepHeatMax / (float(MAX_STEPS)/40.0) )
 
-#define FloorY	0.0
-#define WallZ	2.0
+uniform float FloorY;
+uniform float WallZ;
+uniform float HeadX;
+uniform float HeadY;
+uniform float HeadZ;
+uniform float HeadRadius;
+#define HeadSphere	vec4(HeadX,HeadY,HeadZ,HeadRadius)
 #define WorldUp	vec3(0,1,0)
 #define WorldForward	vec3(0,0,1)	
 
 
-uniform vec4 MoonSphere;// = vec4(0,0,-3,1.0);
+#define GIZMO_NONE 0
+#define GIZMO_LIGHT	1
+
+float Distance(vec3 a,vec3 b)
+{
+	return length( a - b );
+}
+
+vec3 ApplyGizmoColour(int Gizmo,vec3 CurrentColour)
+{
+	if ( Gizmo == 0 )
+		return CurrentColour;
+	
+	return vec3(1,1,1);
+}
 
 struct TRay
 {
@@ -161,125 +191,8 @@ void GetMoonHeightLocal(vec3 MoonNormal,out float Height)
 }
 
 
-void GetMoonColourHeight(vec3 MoonNormal,out vec3 Colour,out float Height)
-{
-	GetMoonHeightLocal( MoonNormal, Height );
-	vec2 HeightmapUv = ViewToEquirect( MoonNormal );
-
-	//	debug uv
-	//Colour = vec3( HeightmapUv, 0.5 );
-	
-	vec3 Rgb = vec3(1.0,1.0,1.0);
-	vec2 uv = HeightmapUv;
-	if ( DrawColour )
-	{
-		Rgb = texture2D( ColourTexture, uv ).xyz;
-		Rgb *= TextureSampleColourMult;
-		Rgb += TextureSampleColourAdd;
-	}
-	else if ( DrawUv )
-	{
-		Rgb = vec3( 1.0-uv.x, uv.y, 1.0 );
-	}
-	else if ( DrawHeight )
-	{
-		Rgb = NormalToRedGreen(Height);
-	}
-
-	Rgb *= BaseColour;
-	
-	if ( ApplyHeightColour )
-	{
-		float Brightness = Height * (1.0 / TerrainHeightScalar);
-		Rgb *= Brightness;
-	}
-	Colour = Rgb;
-}
 
 
-
-
-float DistanceToMoon(vec3 Position)
-{
-	vec3 DeltaToSurface = MoonSphere.xyz - Position;
-	vec3 Normal = -normalize( DeltaToSurface );
-	float MoonRadius = MoonSphere.w;
-	vec3 MoonSurfacePoint = MoonSphere.xyz + Normal * MoonRadius;
-	
-	float Height;
-	GetMoonHeightLocal( Normal, Height );
-	
-	MoonSurfacePoint += Normal * Height * MoonSphere.w;
-	
-	float Distance = length( Position - MoonSurfacePoint );
-	
-	//	do something more clever, like check against surface heights where the height could get in our way
-	//	this scalar (where it works) is relative to the height, so maybe we can work that out...
-	Distance *= HeightMapStepBack;
-	
-	return Distance;
-}
-
-vec3 GetMoonColour(vec3 Position)
-{
-	//	duplicate code!
-	vec3 DeltaToSurface = MoonSphere.xyz - Position;
-	vec3 Normal = -normalize( DeltaToSurface );
-	float MoonRadius = MoonSphere.w;
-	vec3 MoonSurfacePoint = MoonSphere.xyz + Normal * MoonRadius;
-	
-	float Height;
-	vec3 Colour;
-	GetMoonColourHeight( Normal, Colour, Height );
-	return Colour;
-}
-
-
-
-
-//	returns intersction pos, w=success
-vec4 RayMarchSpherePos(TRay Ray,out float StepHeat)
-{
-	const float MinDistance = 0.0001;
-	const float CloseEnough = MinDistance;
-	const float MinStep = MinDistance;
-	const float MaxDistance = FAR_Z;
-	const int MaxSteps = MAX_STEPS;
-	
-	//	start close
-	float RayTime = DistanceToMoon( Ray.Pos );//0.01;
-	
-	for ( int s=0;	s<MaxSteps;	s++ )
-	{
-		StepHeat = float(s)/float(MaxSteps);
-		vec3 Position = Ray.Pos + Ray.Dir * RayTime;
-		float MoonDistance = DistanceToMoon( Position );
-		float HitDistance = MoonDistance;
-		
-		//RayTime += max( HitDistance, MinStep );
-		RayTime += HitDistance;
-		if ( HitDistance < CloseEnough )
-			return vec4(Position,1);
-		
-		//	ray gone too far
-		if (RayTime > MaxDistance)
-			return vec4(Position,0);
-	}
-	//	ray never got close enough
-	StepHeat = 1.0;
-	return vec4(0,0,0,-1);
-}
-
-
-vec4 RayMarchSphere(TRay Ray,out float StepHeat)
-{
-	vec4 Intersection = RayMarchSpherePos( Ray, StepHeat );
-	//if ( Intersection.w < 0.0 )
-	//	return vec4(1,0,0,0);
-	
-	vec3 Colour = GetMoonColour( Intersection.xyz );
-	return vec4( Colour, Intersection.w );
-}
 
 float sdSphere(vec3 Position,vec4 Sphere)
 {
@@ -341,27 +254,48 @@ float sdWall(vec3 Position,vec3 Direction)
 
 float DistanceToScene(vec3 Position,vec3 RayDirection)
 {
-	vec4 OriginSphere = vec4(0,0,0,1.0);
+	vec4 OriginSphere = HeadSphere;
 	
 	float Dist = FAR_Z;
 	
 	Dist = min( Dist, sdSphere(Position,OriginSphere) );
 	Dist = min( Dist, sdFloor(Position,RayDirection) );
 	Dist = min( Dist, sdWall(Position,RayDirection) );
+	
 	return Dist;
 }
 
+//	return gizmo code of an object in front of the current traced ray
+int GetGizmo(TRay Ray,vec4 CurrentHitPosition)
+{
+	float DistanceToHit = distance( Ray.Pos, CurrentHitPosition.xyz ); 
+	float DistanceToLight = sdSphere( Ray.Pos, LightSphere );
+
+	if ( DistanceToLight < DistanceToHit )
+	{
+		//	move the ray, did it actually hit
+		vec3 NearLightPos = Ray.Pos + Ray.Dir * DistanceToLight;
+		DistanceToLight = sdSphere( NearLightPos, LightSphere );
+		if ( DistanceToLight < 0.01 )
+			return GIZMO_LIGHT;
+	}
+	
+	return GIZMO_NONE;
+}
 
 //	returns hitpos,success
 vec4 RayMarchScene(TRay Ray)
 {
 	const float MinDistance = 0.01;
-	const float CloseEnough = MinDistance * 2.0;
-	const float MinStep = MinDistance;
-	const float MaxDistance = FAR_Z;
+	const float CloseEnough = MinDistance;
+	const float MinStep = 0.0;//MinDistance;
+	const float MaxDistance = FAR_Z_EPSILON;
 	const int MaxSteps = MAX_STEPS;
 	
-	float RayTraversed = 0.0;	//	world space
+	//	todo: raytrace wall/floor
+	
+	
+	float RayTraversed = 0.0;	//	world space distance
 	/*
 	//	start close
 	float RayTime = DistanceToScene( Ray.Pos, Ray.Dir );//0.01;
@@ -377,17 +311,143 @@ vec4 RayMarchScene(TRay Ray)
 		float HitDistance = SceneDistance;
 		
 		RayTraversed += max( HitDistance, MinStep );
-		//RayTraversed += HitDistance;
+		/*	iq version
+		if( abs(HitDistance) < (0.0001*RayTraversed) )
+		{ 
+			return vec4(Position,1);
+		}
+		*/
 		if ( HitDistance < CloseEnough )
 			return vec4(Position,1);
 		
 		//	ray gone too far
-		if (RayTraversed > MaxDistance)
+		if (RayTraversed >= MaxDistance)
 			return vec4(Position,0);
 	}
 
 	//	ray never got close enough
 	return vec4(0,0,0,-1);
+}
+
+
+float RayMarchSceneOcclusion(TRay Ray)
+{
+	const float MinDistance = 0.01;
+	const float CloseEnough = MinDistance;
+	const float MinStep = MinDistance;
+	const float MaxDistance = FAR_Z_EPSILON;
+	const int MaxSteps = MAX_STEPS;
+	
+	
+	
+	float RayTraversed = 0.0;	//	world space distance
+	for ( int s=0;	s<MaxSteps;	s++ )
+	{
+		vec3 Position = Ray.Pos + Ray.Dir * RayTraversed;
+		float SceneDistance = DistanceToScene( Position, Ray.Dir );
+		float HitDistance = SceneDistance;
+		
+		RayTraversed += max( HitDistance, MinStep );
+		/*	iq version
+		 if( abs(HitDistance) < (0.0001*RayTraversed) )
+		 { 
+		 return vec4(Position,1);
+		 }
+		 */
+		if ( HitDistance < CloseEnough )
+			return 1.0;
+		
+		//	ray gone too far, never hit anything
+		if (RayTraversed >= MaxDistance)
+			return 0.0;
+	}
+	
+	return 0.0;
+}
+
+float MapDistance(vec3 Position)
+{
+	vec3 Dir = vec3(0,1,0);
+	return DistanceToScene( Position, Dir );
+}
+
+vec3 calcNormal(vec3 pos)
+{
+	//return WorldUp;
+	vec2 e = vec2(1.0,-1.0)*0.5773;
+	const float eps = 0.0005;
+	return normalize( e.xyy * MapDistance( pos + e.xyy*eps ) + 
+					 e.yyx * MapDistance( pos + e.yyx*eps ) + 
+					 e.yxy * MapDistance( pos + e.yxy*eps ) + 
+					 e.xxx * MapDistance( pos + e.xxx*eps ) );
+}
+
+float softshadow(in vec3 RayOrigin, in vec3 RayDir, float k )
+{
+	/*
+	 https://www.shadertoy.com/view/Xds3zN
+	 float tp = (0.8-ro.y)/rd.y; 
+	 if( tp>0.0 )
+	 tmax = min( tmax, tp );
+
+	 */
+	float res = 1.0;
+	float ph = 1e20;
+	float RayTraversed = 0.0;
+	const float MaxDistance = FAR_Z;
+	
+	//	gr: 10 is a magic number here when using the shadowk
+	for ( int i=0;	i<30;	i++ )
+	{
+		vec3 RayPos = RayOrigin + RayDir * RayTraversed;
+		float HitDistance = DistanceToScene( RayPos, RayDir );
+		
+		//	edge or inside then is shadowed
+		if ( HitDistance < 0.0001 )
+		//if ( HitDistance < 0.0 )
+			break;
+		if ( RayTraversed > MaxDistance )
+			break;
+		/*
+		float y = HitDistance * HitDistance / (2.0*ph);
+		float d = sqrt(HitDistance*HitDistance - y*y);
+		res = min( res, k*d/max(0.0,RayTraversed-y) );
+		ph = HitDistance;
+*/
+		//	this is  
+		float s = clamp(8.0*HitDistance/RayTraversed,0.0,1.0);
+		res = min( res, s );
+
+		//RayTraversed += HitDistance;
+		RayTraversed += clamp( HitDistance, 0.01, 0.2 );
+					
+		
+		//if( res<0.004 || RayTraversed>MaxDistance ) 
+		//	break;
+		//float h = map( ro + rd*t ).x;
+		//float s = clamp(8.0*h/t,0.0,1.0);
+		//res = min( res, s );
+		//t += clamp( h, 0.01, 0.2 );
+		//if( res<0.004 || t>tmax ) break;
+	}
+	/*
+	float tp = (0.8-ro.y)/rd.y; 
+	if( tp>0.0 )
+		tmax = min( tmax, tp );
+	
+	float res = 1.0;
+	float t = mint;
+	for( int i=ZERO; i<10; i++ )
+	{
+		float h = map( ro + rd*t ).x;
+		float s = clamp(8.0*h/t,0.0,1.0);
+		res = min( res, s );
+		t += clamp( h, 0.01, 0.2 );
+		if( res<0.004 || t>tmax ) break;
+	}
+	 */
+	res = clamp( res, 0.0, 1.0 );
+	return res*res*(3.0-2.0*res);
 }
 
 
@@ -400,29 +460,48 @@ void main()
 	
 	vec4 HitPos_Valid = RayMarchScene(Ray);
 	
-	Colour = mix( Colour, HitPos_Valid, max(0.0,HitPos_Valid.w) );
-	gl_FragColor = vec4(Colour.xyz,1.0);
-
-	/*
-	gl_FragColor = vec4(Colour.xyz,1.0);
-
-	float StepHeat;
-	vec4 SphereColour = RayMarchSphere( Ray, StepHeat );
-	StepHeat = min( 1.0, StepHeat / STEPHEAT_MAX );
-	if ( DrawStepHeat )
-		SphereColour.xyz = NormalToRedGreen( 1.0 - StepHeat );
-	
-	if ( ApplyAmbientOcclusionColour )
+	if ( HitPos_Valid.w > 0.0 )
 	{
-		float Mult = Range01( AmbientOcclusionMin, AmbientOcclusionMax, 1.0-StepHeat );
-		SphereColour.xyz *= Mult;
+		vec3 HitPos = HitPos_Valid.xyz;
+		vec3 Normal = calcNormal(HitPos);
+		float StepAwayFromSurface = BounceSurfaceDistance;
+		
+		Colour = vec4( HitPos, 1.0 );
+		Colour = vec4( abs(HitPos), 1.0 );
+		//Colour = vec4(1);
+		Colour = vec4( abs(Normal),1.0);
+		
+		bool ApplyHardOcclusion = true;
+		bool ApplySoftShadow = false;
+		float ShadowMult = 0.0;	//	shadow colour
+		
+		if ( ApplySoftShadow )
+		{
+			vec3 ShadowRayPos = HitPos+Normal*StepAwayFromSurface;
+			vec3 ShadowRayDir = normalize(WorldLightPosition-HitPos);
+			float Shadow = softshadow( ShadowRayPos, ShadowRayDir, Shadowk );
+			//float Shadow = softshadow( WorldLightPosition, -ShadowRayDir, Shadowk );
+			//float Shadow = HardShadow( ShadowRayPos, ShadowRayDir );
+			Colour.xyz *= mix( ShadowMult, 1.0, Shadow );//Shadow * ShadowMult;
+		}
+		
+		if ( ApplyHardOcclusion )
+		{
+			TRay OcclusionRay;
+			OcclusionRay.Pos = HitPos+Normal*StepAwayFromSurface;
+			OcclusionRay.Dir = normalize(WorldLightPosition-HitPos);
+			float Occlusion = RayMarchSceneOcclusion( OcclusionRay );
+			Colour.xyz = mix( Colour.xyz, vec3(ShadowMult), Occlusion );
+			//Colour.xyz = OcclusionRay.Dir;
+		}
 	}
+	
+	//	render gizmos
+	int Gizmo = GetGizmo( Ray, HitPos_Valid );
+	Colour.xyz = ApplyGizmoColour(Gizmo,Colour.xyz);
+	
+	
+	gl_FragColor = vec4(Colour.xyz,1.0);
 
-
-	Colour = mix( Colour, SphereColour, max(0.0,SphereColour.w) );
-	//Colour.xy = uv;
-	Colour.w = 1.0;
-	gl_FragColor = Colour;
-	*/
 }
 

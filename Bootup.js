@@ -343,7 +343,7 @@ function InitCameraControls(Gui,Camera)
 		if ( Button == 'Right' )
 			Camera.OnCameraPanLocal( -x, y, 0, FirstDown );
 		if ( Button == 'Middle' )
-			Camera.OnCameraPanLocal( x, 0, y, FirstDown );
+			Camera.OnCameraPanLocal( -x, 0, y, FirstDown );
 	}
 
 	Gui.OnMouseDown = function(x,y,Button)

@@ -22,7 +22,20 @@ Params.HeightMapStepBack = 0.57;//0.30;
 Params.MoonSphere = [0,1.6,0.2,0.5];
 Params.DebugClearEyes = false;
 Params.XrToMouseScale = 100;	//	metres to pixels
-
+Params.WorldLightPosition = [2,8,6];
+Params.Shadowk = 0.7;//1.7
+//	0.0051
+Params.BounceSurfaceDistance = 0.02;
+Params.FloorY = 1.0;
+Params.WallZ = 1.0;
+Params.HeadX = 0;
+Params.HeadY = 0;
+Params.HeadZ = 0;
+Params.HeadRadius = 0.5;
+Params.LightX = 2;
+Params.LightY = 8;
+Params.LightZ = 6;
+Params.LightRadius = 0.1;
 
 export const ParamsMeta = {};
 ParamsMeta.TextureSampleColourMult = {min:0,max:2};
@@ -36,4 +49,16 @@ ParamsMeta.Fov = {min:10,max:90};
 ParamsMeta.BrightnessMult = {min:0,max:10};
 ParamsMeta.HeightMapStepBack = {min:0,max:1};
 ParamsMeta.StepHeatMax = {min:0,max:1};
+ParamsMeta.Shadowk = {min:0,max:3,step:0.01};
+ParamsMeta.BounceSurfaceDistance = {min:0,max:1,step:0.01};
+ParamsMeta.FloorY = {min:-5,max:5,step:0.01};
+ParamsMeta.WallZ = {min:-5,max:5,step:0.01};
+ParamsMeta.HeadX = {min:-3,max:3,step:0.01};
+ParamsMeta.HeadY = {min:-3,max:3,step:0.01};
+ParamsMeta.HeadZ = {min:-3,max:3,step:0.01};
+ParamsMeta.HeadRadius = {min:0.1,max:3,step:0.1};
+ParamsMeta.LightX = {min:-10,max:10,step:0.01};
+ParamsMeta.LightY = {min:-10,max:10,step:0.01};
+ParamsMeta.LightZ = {min:-10,max:10,step:0.01};
+ParamsMeta.LightRadius = {min:0.1,max:3,step:0.1};
 
