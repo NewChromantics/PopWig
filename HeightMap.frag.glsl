@@ -31,6 +31,7 @@ uniform float LightX;
 uniform float LightY;
 uniform float LightZ;
 uniform float LightRadius;
+uniform float ShadowHardness;
 #define WorldLightPosition	vec3(LightX,LightY,LightZ)
 #define LightSphere	vec4(LightX,LightY,LightZ,LightRadius)
 
@@ -334,29 +335,50 @@ float RayMarchSceneOcclusion(TRay Ray)
 	float MaxDistance = length(Ray.Dir);
 	Ray.Dir = normalize(Ray.Dir);
 	
+	float Occlusion = 0.0;
 	float RayTraversed = 0.0;	//	world space distance
+	
+	//	this must be relative to ShadowHardness
+	//	reverse the func
+	float MaxDistanceForShadow = ShadowHardness * 1.1;
+	
 	for ( int s=0;	s<MaxSteps;	s++ )
 	{
 		vec3 Position = Ray.Pos + Ray.Dir * RayTraversed;
 		float SceneDistance = DistanceToScene( Position, Ray.Dir );
 		float HitDistance = SceneDistance;
+
 		
 		RayTraversed += max( HitDistance, MinStep );
-		/*	iq version
-		 if( abs(HitDistance) < (0.0001*RayTraversed) )
-		 { 
-		 return vec4(Position,1);
-		 }
-		 */
+
+		if ( HitDistance < MaxDistanceForShadow )
+		{
+			//	accumulate occlusion as we go
+			//	the further down the ray, the more we accumualate the near misses
+			float Bounce = 1.0 - clamp( ShadowHardness * HitDistance / RayTraversed,0.0,1.0);
+			Occlusion = max( Occlusion, Bounce );
+		}	
+
+		
 		if ( HitDistance < CloseEnough )
-			return 1.0;
+		{
+			Occlusion = 1.0;
+			break;
+		}
 		
 		//	ray gone too far, never hit anything
 		if (RayTraversed >= MaxDistance)
-			return 0.0;
+		{
+			//Occlusion = 0.0;
+			break;
+		}
+		
+		if ( Occlusion >= 1.0 )
+			break;
 	}
 	
-	return 0.0;
+	Occlusion = clamp( Occlusion, 0.0, 1.0 );
+	return Occlusion*Occlusion*(3.0-2.0*Occlusion);
 }
 
 float MapDistance(vec3 Position)
