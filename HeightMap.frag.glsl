@@ -398,74 +398,6 @@ vec3 calcNormal(vec3 pos)
 					 e.xxx * MapDistance( pos + e.xxx*eps ) );
 }
 
-float softshadow(in vec3 RayOrigin, in vec3 RayDir, float k )
-{
-	/*
-	 https://www.shadertoy.com/view/Xds3zN
-	 float tp = (0.8-ro.y)/rd.y; 
-	 if( tp>0.0 )
-	 tmax = min( tmax, tp );
-
-	 */
-	float res = 1.0;
-	float ph = 1e20;
-	float RayTraversed = 0.0;
-	const float MaxDistance = FAR_Z;
-	
-	//	gr: 10 is a magic number here when using the shadowk
-	for ( int i=0;	i<30;	i++ )
-	{
-		vec3 RayPos = RayOrigin + RayDir * RayTraversed;
-		float HitDistance = DistanceToScene( RayPos, RayDir );
-		
-		//	edge or inside then is shadowed
-		if ( HitDistance < 0.0001 )
-		//if ( HitDistance < 0.0 )
-			break;
-		if ( RayTraversed > MaxDistance )
-			break;
-		/*
-		float y = HitDistance * HitDistance / (2.0*ph);
-		float d = sqrt(HitDistance*HitDistance - y*y);
-		res = min( res, k*d/max(0.0,RayTraversed-y) );
-		ph = HitDistance;
-*/
-		//	this is  
-		float s = clamp(8.0*HitDistance/RayTraversed,0.0,1.0);
-		res = min( res, s );
-
-		//RayTraversed += HitDistance;
-		RayTraversed += clamp( HitDistance, 0.01, 0.2 );
-					
-		
-		//if( res<0.004 || RayTraversed>MaxDistance ) 
-		//	break;
-		//float h = map( ro + rd*t ).x;
-		//float s = clamp(8.0*h/t,0.0,1.0);
-		//res = min( res, s );
-		//t += clamp( h, 0.01, 0.2 );
-		//if( res<0.004 || t>tmax ) break;
-	}
-	/*
-	float tp = (0.8-ro.y)/rd.y; 
-	if( tp>0.0 )
-		tmax = min( tmax, tp );
-	
-	float res = 1.0;
-	float t = mint;
-	for( int i=ZERO; i<10; i++ )
-	{
-		float h = map( ro + rd*t ).x;
-		float s = clamp(8.0*h/t,0.0,1.0);
-		res = min( res, s );
-		t += clamp( h, 0.01, 0.2 );
-		if( res<0.004 || t>tmax ) break;
-	}
-	 */
-	res = clamp( res, 0.0, 1.0 );
-	return res*res*(3.0-2.0*res);
-}
-
 
 
 void main()
@@ -488,18 +420,7 @@ void main()
 		Colour = vec4( abs(Normal),1.0);
 		
 		bool ApplyHardOcclusion = true;
-		bool ApplySoftShadow = false;
 		float ShadowMult = 0.0;	//	shadow colour
-		
-		if ( ApplySoftShadow )
-		{
-			vec3 ShadowRayPos = HitPos+Normal*StepAwayFromSurface;
-			vec3 ShadowRayDir = normalize(WorldLightPosition-HitPos);
-			float Shadow = softshadow( ShadowRayPos, ShadowRayDir, Shadowk );
-			//float Shadow = softshadow( WorldLightPosition, -ShadowRayDir, Shadowk );
-			//float Shadow = HardShadow( ShadowRayPos, ShadowRayDir );
-			Colour.xyz *= mix( ShadowMult, 1.0, Shadow );//Shadow * ShadowMult;
-		}
 		
 		if ( ApplyHardOcclusion )
 		{
