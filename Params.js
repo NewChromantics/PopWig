@@ -37,6 +37,7 @@ Params.LightY = 8;
 Params.LightZ = 6;
 Params.LightRadius = 0.1;
 Params.ShadowHardness = 2.1;
+Params.VignettePow = 0.15;
 
 export const ParamsMeta = {};
 ParamsMeta.TextureSampleColourMult = {min:0,max:2};
@@ -63,4 +64,4 @@ ParamsMeta.LightY = {min:-10,max:10,step:0.01};
 ParamsMeta.LightZ = {min:-10,max:10,step:0.01};
 ParamsMeta.LightRadius = {min:0.1,max:3,step:0.1};
 ParamsMeta.ShadowHardness = {min:1.0,max:30,step:0.1};
-
+ParamsMeta.VignettePow = {min:0.0,max:1,step:0.01};

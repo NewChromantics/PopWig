@@ -55,10 +55,14 @@ uniform float HeadRadius;
 #define GIZMO_NONE 0
 #define GIZMO_LIGHT	1
 
+uniform float VignettePow;
+
+
 float Distance(vec3 a,vec3 b)
 {
 	return length( a - b );
 }
+
 
 vec3 ApplyGizmoColour(int Gizmo,vec3 CurrentColour)
 {
@@ -437,6 +441,10 @@ void main()
 	int Gizmo = GetGizmo( Ray, HitPos_Valid );
 	Colour.xyz = ApplyGizmoColour(Gizmo,Colour.xyz);
 	
+	
+	//	vignette
+	float Vignette = pow( 16.0*uv.x*uv.y*(1.0-uv.x)*(1.0-uv.y), VignettePow );
+	Colour.xyz *= Vignette;
 	
 	gl_FragColor = vec4(Colour.xyz,1.0);
 
