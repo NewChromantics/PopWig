@@ -24,10 +24,16 @@ uniform float TextureSampleColourMult;
 uniform float TextureSampleColourAdd;
 const bool FlipSample = true;
 uniform float StepHeatMax;
-#define MAX_STEPS	30
-#define FAR_Z		10.0
+#define MAX_STEPS	40
+#define FAR_Z		100.0
 //	bodge as AO colour was tweaked with 40 steps
 #define STEPHEAT_MAX	( StepHeatMax / (float(MAX_STEPS)/40.0) )
+
+#define FloorY	0.0
+#define WallZ	2.0
+#define WorldUp	vec3(0,1,0)
+#define WorldForward	vec3(0,0,1)	
+
 
 uniform vec4 MoonSphere;// = vec4(0,0,-3,1.0);
 
@@ -234,7 +240,7 @@ vec3 GetMoonColour(vec3 Position)
 //	returns intersction pos, w=success
 vec4 RayMarchSpherePos(TRay Ray,out float StepHeat)
 {
-	const float MinDistance = 0.001;
+	const float MinDistance = 0.0001;
 	const float CloseEnough = MinDistance;
 	const float MinStep = MinDistance;
 	const float MaxDistance = FAR_Z;
@@ -275,19 +281,131 @@ vec4 RayMarchSphere(TRay Ray,out float StepHeat)
 	return vec4( Colour, Intersection.w );
 }
 
+float sdSphere(vec3 Position,vec4 Sphere)
+{
+	return length( Position-Sphere.xyz )-Sphere.w;
+}
+
+float sdPlane( vec3 p, vec3 n, float h )
+{
+	// n must be normalized
+	n = normalize(n);
+	return dot(p,n) + h;
+}
+
+
+//vec2 sdFloor(vec3 Position,vec3 Direction)
+float sdFloor(vec3 Position,vec3 Direction)
+{
+	//return vec2(999.0,0.0);//	should fail to render a floor
+	float d = sdPlane(Position,WorldUp,FloorY);
+	float tp1 = ( Position.y <= FloorY ) ? 1.0 : 0.0;
+	/*
+	 float tp1 = (Position.y-FloorY)/Direction.y;
+	 if ( tp1 > 0.0 )
+	 {
+	 //d = tp1;	//	gr: why is sdPlane distance wrong? but right in map() 
+	 tp1 = 1.0;
+	 }
+	 else
+	 {
+	 //d = 99.9;
+	 tp1 = 0.0;
+	 }
+	 */
+	//return vec2(d,tp1);
+	return d;
+}
+
+float sdWall(vec3 Position,vec3 Direction)
+{
+	//return vec2(999.0,0.0);//	should fail to render a floor
+	float d = sdPlane(Position,WorldForward,WallZ);
+	//float tp1 = ( Position.z <= WallZ ) ? 1.0 : 0.0;
+	/*
+	 float tp1 = (Position.y-FloorY)/Direction.y;
+	 if ( tp1 > 0.0 )
+	 {
+	 //d = tp1;	//	gr: why is sdPlane distance wrong? but right in map() 
+	 tp1 = 1.0;
+	 }
+	 else
+	 {
+	 //d = 99.9;
+	 tp1 = 0.0;
+	 }
+	 */
+	//return vec2(d,tp1);
+	return d;
+}
+
+float DistanceToScene(vec3 Position,vec3 RayDirection)
+{
+	vec4 OriginSphere = vec4(0,0,0,1.0);
+	
+	float Dist = FAR_Z;
+	
+	Dist = min( Dist, sdSphere(Position,OriginSphere) );
+	Dist = min( Dist, sdFloor(Position,RayDirection) );
+	Dist = min( Dist, sdWall(Position,RayDirection) );
+	return Dist;
+}
+
+
+//	returns hitpos,success
+vec4 RayMarchScene(TRay Ray)
+{
+	const float MinDistance = 0.01;
+	const float CloseEnough = MinDistance * 2.0;
+	const float MinStep = MinDistance;
+	const float MaxDistance = FAR_Z;
+	const int MaxSteps = MAX_STEPS;
+	
+	float RayTraversed = 0.0;	//	world space
+	/*
+	//	start close
+	float RayTime = DistanceToScene( Ray.Pos, Ray.Dir );//0.01;
+	if ( RayTime >= FAR_Z )
+	{
+		return vec4( RayTime, RayTime, RayTime, 0.0 );
+	}
+	*/
+	for ( int s=0;	s<MaxSteps;	s++ )
+	{
+		vec3 Position = Ray.Pos + Ray.Dir * RayTraversed;
+		float SceneDistance = DistanceToScene( Position, Ray.Dir );
+		float HitDistance = SceneDistance;
+		
+		RayTraversed += max( HitDistance, MinStep );
+		//RayTraversed += HitDistance;
+		if ( HitDistance < CloseEnough )
+			return vec4(Position,1);
+		
+		//	ray gone too far
+		if (RayTraversed > MaxDistance)
+			return vec4(Position,0);
+	}
+
+	//	ray never got close enough
+	return vec4(0,0,0,-1);
+}
+
 
 
 void main()
 {
-	//gl_FragColor = vec4(uv,0,1);
-	//return;
 	TRay Ray;
 	GetWorldRay(Ray.Pos,Ray.Dir);
 	vec4 Colour = vec4(BackgroundColour,0.0);
 	
-	//gl_FragColor = vec4(Ray.Dir,1.0);
-	//return;
+	vec4 HitPos_Valid = RayMarchScene(Ray);
 	
+	Colour = mix( Colour, HitPos_Valid, max(0.0,HitPos_Valid.w) );
+	gl_FragColor = vec4(Colour.xyz,1.0);
+
+	/*
+	gl_FragColor = vec4(Colour.xyz,1.0);
+
 	float StepHeat;
 	vec4 SphereColour = RayMarchSphere( Ray, StepHeat );
 	StepHeat = min( 1.0, StepHeat / STEPHEAT_MAX );
@@ -305,5 +423,6 @@ void main()
 	//Colour.xy = uv;
 	Colour.w = 1.0;
 	gl_FragColor = Colour;
+	*/
 }
 

@@ -339,9 +339,9 @@ function InitCameraControls(Gui,Camera)
 		//if ( Button == 0 )
 		//	this.Camera.OnCameraPan( x, 0, y, FirstDown );
 		if ( Button == 'Left' )
-			Camera.OnCameraPanLocal( -x, y, 0, FirstDown );
+			Camera.OnCameraFirstPersonRotate( x, y, 0, FirstDown );
 		if ( Button == 'Right' )
-			Camera.OnCameraPanLocal( x, y, 0, FirstDown );
+			Camera.OnCameraPanLocal( -x, y, 0, FirstDown );
 		if ( Button == 'Middle' )
 			Camera.OnCameraPanLocal( x, 0, y, FirstDown );
 	}
@@ -358,7 +358,7 @@ function InitCameraControls(Gui,Camera)
 
 	Gui.OnMouseScroll = function(x,y,Button,Delta)
 	{
-		let Fly = Delta[1] * 50;
+		let Fly = Delta[1] * -50;
 		//Fly *= Params.ScrollFlySpeed;
 
 		Camera.OnCameraPanLocal( 0, 0, 0, true );
@@ -372,8 +372,8 @@ async function ScreenRenderLoop()
 	let RenderView = new Pop.Gui.RenderView(null,'RenderCanvas');
 	let RenderContext = new Pop.Opengl.Context(RenderView);
 	let Camera = new Camera_t();
-	Camera.LookAt = Params.MoonSphere.slice();
-	Camera.Position = [0,1.6, Params.MoonSphere[2]+Params.MoonSphere[3]*3 ];
+	Camera.LookAt = [0,0,0];
+	Camera.Position = [0,1,3];
 
 	InitCameraControls(RenderView,Camera);
 
