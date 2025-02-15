@@ -257,13 +257,92 @@ float sdWall(vec3 Position,vec3 Direction)
 	return d;
 }
 
+float round(float value)
+{
+	return floor(value + 0.5);
+}
+
+/*
+// modified Keinert et al's inverse Spherical Fibonacci Mapping
+//	p is normal to center
+//	n is subdivisions
+vec4 inverseSF( in vec3 p, const in float n )
+{
+	//const float PI = 3.14159265359;
+	float PHI = 1.61803398875;
+	float phi = min(atan(p.y,p.x),PI);
+	float k   = max(floor(log(n*PI*sqrt(5.0)*(1.-p.z*p.z))/log(PHI+1.)),2.0);
+	float Fk = pow(PHI,k)/sqrt(5.0);
+	
+	vec2  F   = vec2( round(Fk), round(Fk*PHI) );
+		
+	
+	vec2  G   = PI*(fract((F+1.0)*PHI)-(PHI-1.0));    
+	
+	mat2 iB = mat2(F.y,-F.x,G.y,-G.x)/(F.y*G.x-F.x*G.y);
+	vec2 c = floor(iB*0.5*vec2(phi,n*p.z-n+1.0));
+	
+	float ma = 0.0;
+	vec4 res = vec4(0);
+	for( int s=0; s<4; s++ )
+	{
+		vec2 uv = vec2(s&1,s>>1);
+		float i = dot(F,uv+c);
+		float phi = 2.0*PI*fract(i*PHI);
+		float cT = 1.0 - (2.0*i+1.0)/n;
+		float sT = sqrt(1.0-cT*cT);
+		vec3 q = vec3(cos(phi)*sT, sin(phi)*sT,cT);
+		float a = dot(p,q);
+		if (a > ma)
+		{
+			ma = a;
+			res.xyz = q;
+			res.w = i;
+		}
+	}
+	return res;
+}
+*/
+float DistanceToHead(vec3 Position)
+{
+	return sdSphere( Position, HeadSphere );
+	/*
+	float lp = length(Position.xyz - HeadSphere.xyz);
+	float dmin = lp-1.0;
+	{
+		//vec3 w = Position/lp;
+		vec3 Normal = normalize( Position.xyz - HeadSphere.xyz );
+		//vec3 Normal = w;
+		vec4 fibo = inverseSF(Normal, 700.0);
+		float hh = 1.0 - smoothstep(0.05,0.1,length(fibo.xyz-Normal));
+		dmin -= 0.07*hh;
+		//color = vec4(0.05,0.1,0.1,1.0)*hh * (1.0+0.5*sin(fibo.w*111.1));
+		
+	}
+	return dmin;
+	
+	/*
+	vec3 PosInHeadSpace = Position - HeadSphere.xyz;
+	float DistanceToHeadBounds = length(PosInHeadSpace) - HeadSphere.w;
+	if ( DistanceToHeadBounds > 0.0 )
+		return DistanceToHeadBounds;
+	
+	//vec2 id = round(p/s);
+	//vec2  r = p - s*id;
+	float Spacing = 0.5;
+	PosInHeadSpace = mod( PosInHeadSpace, Spacing );
+	
+	float Dist = distance( PosInHeadSpace, vec3(Spacing*0.5) ) - (HeadRadius * 0.1);
+	return Dist;
+	 */
+}
+
+
 float DistanceToScene(vec3 Position,vec3 RayDirection)
 {
-	vec4 OriginSphere = HeadSphere;
-	
 	float Dist = FAR_Z;
 	
-	Dist = min( Dist, sdSphere(Position,OriginSphere) );
+	Dist = min( Dist, DistanceToHead(Position) );
 	Dist = min( Dist, sdFloor(Position,RayDirection) );
 	Dist = min( Dist, sdWall(Position,RayDirection) );
 	
