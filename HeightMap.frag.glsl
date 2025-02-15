@@ -339,7 +339,8 @@ float RayMarchSceneOcclusion(TRay Ray)
 	float MaxDistance = length(Ray.Dir);
 	Ray.Dir = normalize(Ray.Dir);
 	
-	float Occlusion = 0.0;
+	//float Occlusion = 0.0;
+	float Light = 1.0;
 	float RayTraversed = 0.0;	//	world space distance
 	
 	//	this must be relative to ShadowHardness
@@ -359,14 +360,15 @@ float RayMarchSceneOcclusion(TRay Ray)
 		{
 			//	accumulate occlusion as we go
 			//	the further down the ray, the more we accumualate the near misses
-			float Bounce = 1.0 - clamp( ShadowHardness * HitDistance / RayTraversed,0.0,1.0);
-			Occlusion = max( Occlusion, Bounce );
+			float Bounce = clamp( ShadowHardness * HitDistance / RayTraversed,0.0,1.0);
+			Light = min( Light, Bounce );
+			//Occlusion = max( Occlusion, Bounce );
 		}	
 
 		
 		if ( HitDistance < CloseEnough )
 		{
-			Occlusion = 1.0;
+			Light = 0.0;
 			break;
 		}
 		
@@ -377,12 +379,14 @@ float RayMarchSceneOcclusion(TRay Ray)
 			break;
 		}
 		
-		if ( Occlusion >= 1.0 )
+		if ( Light <= 0.0 )
 			break;
 	}
 	
-	Occlusion = clamp( Occlusion, 0.0, 1.0 );
-	return Occlusion*Occlusion*(3.0-2.0*Occlusion);
+	Light = clamp( Light, 0.0, 1.0 );
+	Light*Light*(3.0-2.0*Light);
+	float Occlusion = 1.0 - Light;
+	return Occlusion;
 }
 
 float MapDistance(vec3 Position)
